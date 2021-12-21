@@ -1,48 +1,151 @@
-import { request } from 'https';
+import { IQueryAttributes, IQueryResponse } from '../query';
+import EQueryCode from '../query/enum/query.enum';
+import QueryService from '../query/query.service';
+import {
+  ICryptoProcessorCryptocurrency,
+  ICryptoProcessorCryptocurrencySingle,
+  ICryptoProcessorPreparedCryptocurrency,
+  ICryptoProcessorQueryHeaders,
+  ICryptoProcessorQueryResponse,
+} from './interface';
 
 export default class CryptoProcessorService {
-  private baseUrl;
+  private _baseUrl;
 
-  private apiKey;
+  private _apiKey;
+
+  private _baseHeaders;
+
+  private _baseAttributes;
+
+  private _queryService;
 
   constructor() {
-    this.baseUrl = process.env.COIN_MARKET_CAP_BASED_URL;
-    this.apiKey = process.env.COIN_MARKET_CAP_API_KEY;
+    this._baseUrl = process.env.COIN_MARKET_CAP_BASED_URL;
+    this._apiKey = process.env.COIN_MARKET_CAP_API_KEY;
+    this._baseHeaders = {
+      'X-CMC_PRO_API_KEY': this._apiKey,
+      'Content-Type': 'application/json',
+    } as ICryptoProcessorQueryHeaders;
+    this._baseAttributes = {
+      hostname: this._baseUrl ?? '',
+      path: '',
+      method: 'GET',
+      headers: {
+        ...this._baseHeaders,
+      },
+    } as IQueryAttributes<ICryptoProcessorQueryHeaders>;
+    this._queryService = new QueryService();
   }
 
-  public testStart = async () => {
-    console.log(this.baseUrl, this.apiKey);
-
-    const req = request(
+  public getListOfCryptocurrencies = async (): Promise<
+    IQueryResponse<ICryptoProcessorPreparedCryptocurrency[]>
+  > => {
+    const cryptocurrencies = await this._queryService.get<
+      ICryptoProcessorQueryHeaders,
+      ICryptoProcessorQueryResponse<ICryptoProcessorCryptocurrency[]>
+    >(
       {
-        hostname: this.baseUrl,
-        path: '/v1/cryptocurrency/listings/latest?limit=20',
+        ...this._baseAttributes,
+        path: '/v1/cryptocurrency/listings/latest',
         method: 'GET',
-        headers: {
-          'X-CMC_PRO_API_KEY': this.apiKey,
-          'Content-Type': 'application/json',
-        },
       },
-      (res) => {
-        let body = '';
-        console.log(`STATUS: ${res.statusCode}`);
-        console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
-        res.setEncoding('utf8');
-        res.on('data', (chunk) => {
-          console.log(`BODY: ${chunk}`);
-          body += chunk;
-        });
-        res.on('end', () => {
-          console.log('No more data in response.');
-          console.log('Finnaly body:', JSON.parse(body));
-        });
+      {
+        limit: '50',
       }
     );
 
-    req.on('error', (e) => {
-      console.log(`problem with request: ${e.message}`);
-    });
+    const preparedCryptocurrencies =
+      this.preparedResponse<ICryptoProcessorCryptocurrency[]>(cryptocurrencies);
 
-    req.end();
+    if (
+      preparedCryptocurrencies.code === EQueryCode.OK &&
+      preparedCryptocurrencies.data !== undefined
+    ) {
+      return {
+        ...preparedCryptocurrencies,
+        data: preparedCryptocurrencies.data?.map(
+          (it) =>
+            ({
+              symbol: it.symbol,
+              priceInUSD: it.quote.USD.price,
+            } as ICryptoProcessorPreparedCryptocurrency)
+        ),
+      };
+    }
+
+    return {
+      ...preparedCryptocurrencies,
+      data: undefined,
+    };
+  };
+
+  public getCryptocurrency = async (
+    symbol: string
+  ): Promise<IQueryResponse<ICryptoProcessorPreparedCryptocurrency>> => {
+    const cryptocurrency = await this._queryService.get<
+      ICryptoProcessorQueryHeaders,
+      ICryptoProcessorQueryResponse<ICryptoProcessorCryptocurrencySingle>
+    >(
+      {
+        ...this._baseAttributes,
+        path: '/v1/cryptocurrency/quotes/latest',
+        method: 'GET',
+      },
+      {
+        symbol,
+      }
+    );
+
+    const preparedCryptocurrency =
+      this.preparedResponse<ICryptoProcessorCryptocurrencySingle>(
+        cryptocurrency
+      );
+
+    if (
+      preparedCryptocurrency.code === EQueryCode.OK &&
+      preparedCryptocurrency.data !== undefined
+    ) {
+      return {
+        ...preparedCryptocurrency,
+        data: {
+          symbol: preparedCryptocurrency.data[symbol].symbol,
+          priceInUSD: preparedCryptocurrency.data[symbol].quote.USD.price,
+        } as ICryptoProcessorPreparedCryptocurrency,
+      };
+    }
+
+    return {
+      ...preparedCryptocurrency,
+      data: undefined,
+    };
+  };
+
+  private preparedResponse = <T>(
+    response: IQueryResponse<ICryptoProcessorQueryResponse<T>>
+  ): IQueryResponse<T> => {
+    if (response.code === EQueryCode.OK && response.data !== undefined) {
+      const data = response.data;
+      if (data.status.error_code === 0) {
+        return {
+          code: response.code,
+          message: response.message,
+          data: data.data,
+        };
+      } else {
+        return {
+          code: EQueryCode.BAD_REQUEST,
+          message:
+            data.status.error_message === null
+              ? 'Bad request!'
+              : data.status.error_message,
+        };
+      }
+    } else {
+      return {
+        code: response.code,
+        message: response.message,
+      };
+    }
   };
 }
