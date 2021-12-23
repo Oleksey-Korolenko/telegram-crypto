@@ -2,27 +2,33 @@ import express from 'express';
 import requireAll from 'require-all';
 import dotenv from 'dotenv';
 
-const app = express();
-const router = express.Router;
+const bootstrap = async () => {
+  const app = express();
+  const router = express.Router;
 
-dotenv.config();
+  dotenv.config();
 
-app.use(express.json({ limit: '3mb' }));
+  app.use(express.json({ limit: '3mb' }));
 
-try {
-  const controllers = requireAll({
-    dirname: __dirname,
-    filter: /^.+\.controller\.ts$/,
-  });
+  try {
+    const controllers = requireAll({
+      dirname: __dirname,
+      filter: /^.+\.controller\.ts$/,
+    });
 
-  for (const name in controllers) {
-    app.use(
-      `/api/${name}`,
-      controllers[name][`${name}.controller.ts`].default(router)
-    );
+    for (const name in controllers) {
+      app.use(
+        `/api/${name}`,
+        await controllers[name][`${name}.controller.ts`].default(router)
+      );
+
+      console.log(`${name} initialized`);
+    }
+  } catch (e) {
+    console.error(e);
   }
-} catch (e) {
-  console.error(e);
-}
 
-export default app;
+  return app;
+};
+
+export default bootstrap;

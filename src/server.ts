@@ -1,7 +1,14 @@
 import app from './app';
 
-const port = process.env.PORT || 3550;
+const bootstrap = async () => {
+  const server = await app();
 
-app.listen(port, () => {
-  console.log(`Сервер запущен на порте ${port}`);
-});
+  const port = Number(process.env.PORT) ?? 8081;
+  const host = process.env.HOST ?? 'localhost';
+
+  server.listen(port, host, () => {
+    console.log(`Started on http://${host}:${port}`);
+  });
+};
+
+bootstrap();
