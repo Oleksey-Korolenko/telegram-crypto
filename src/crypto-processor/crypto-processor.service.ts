@@ -1,4 +1,4 @@
-import { IQueryAttributes, IQueryResponse } from '../query';
+import { IQueryAttributes, IQueryParams, IQueryResponse } from '../query';
 import EQueryCode from '../query/enum/query.enum';
 import QueryService from '../query/query.service';
 import {
@@ -41,9 +41,10 @@ export default class CryptoProcessorService {
   public getListOfCryptocurrencies = async (): Promise<
     IQueryResponse<ICryptoProcessorPreparedCryptocurrency[]>
   > => {
-    const cryptocurrencies = await this._queryService.get<
+    const cryptocurrencies = await this._queryService.sendRequest<
       ICryptoProcessorQueryHeaders,
-      ICryptoProcessorQueryResponse<ICryptoProcessorCryptocurrency[]>
+      ICryptoProcessorQueryResponse<ICryptoProcessorCryptocurrency[]>,
+      IQueryParams
     >(
       {
         ...this._baseAttributes,
@@ -51,8 +52,9 @@ export default class CryptoProcessorService {
         method: 'GET',
       },
       {
-        limit: '50',
-      }
+        limit: '20',
+      },
+      {}
     );
 
     const preparedCryptocurrencies =
@@ -83,9 +85,10 @@ export default class CryptoProcessorService {
   public getCryptocurrency = async (
     symbol: string
   ): Promise<IQueryResponse<ICryptoProcessorPreparedCryptocurrency>> => {
-    const cryptocurrency = await this._queryService.get<
+    const cryptocurrency = await this._queryService.sendRequest<
       ICryptoProcessorQueryHeaders,
-      ICryptoProcessorQueryResponse<ICryptoProcessorCryptocurrencySingle>
+      ICryptoProcessorQueryResponse<ICryptoProcessorCryptocurrencySingle>,
+      IQueryParams
     >(
       {
         ...this._baseAttributes,
@@ -94,7 +97,8 @@ export default class CryptoProcessorService {
       },
       {
         symbol,
-      }
+      },
+      {}
     );
 
     const preparedCryptocurrency =

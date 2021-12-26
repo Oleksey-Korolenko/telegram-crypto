@@ -4,9 +4,10 @@ import { IQueryAttributes, IQueryParams, IQueryResponse } from '.';
 import EQueryCode from './enum/query.enum';
 
 export default class QueryService {
-  public get = async <Headers, ResponseType>(
+  public sendRequest = async <Headers, ResponseType, BodyType>(
     attributes: IQueryAttributes<Headers>,
-    params: IQueryParams
+    params: IQueryParams,
+    body?: BodyType
   ): Promise<IQueryResponse<ResponseType>> => {
     let preparedParams = '';
 
@@ -26,20 +27,24 @@ export default class QueryService {
             path: `${attributes.path}?${preparedParams}`,
           } as unknown as RequestOptions,
           (res) => {
-            let body = '';
+            let responseBody = '';
             res.setEncoding('utf8');
             res.on('data', (chunk) => {
-              body += chunk;
+              responseBody += chunk;
             });
             res.on('end', () => {
               resolve({
                 code: EQueryCode.OK,
                 message: 'Everything is correct!',
-                data: JSON.parse(body),
+                data: JSON.parse(responseBody),
               } as IQueryResponse<ResponseType>);
             });
           }
         );
+
+        if (body !== undefined) {
+          req.write(JSON.stringify(body));
+        }
 
         req.on('error', (e) => {
           reject({
