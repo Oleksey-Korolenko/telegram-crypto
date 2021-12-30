@@ -1,13 +1,19 @@
 import {
+  IArgsForPreparedText,
+  ITelegramCommandRessponse,
   ITelegramQueryBody,
   ITelegramQueryHeaders,
+  ITelegramRessponse,
   ITelegramWebhookResponse,
 } from '.';
 import CryptoProcessorService from '../crypto-processor/crypto-processor.service';
-import { IQueryAttributes } from '../query';
+import ECryptoProcessorCode from '../crypto-processor/enum/crypto-processor-code.enum';
+import { ICryptoProcessorCryptocurrencySingle } from '../crypto-processor/interface';
+import { IQueryAttributes, IQueryResponse } from '../query';
 import EQueryCode from '../query/enum/query.enum';
 import QueryService from '../query/query.service';
 import messagesInRussian from './messages/ru';
+import TelegramTextFormattedService from './telegram-text-formatted.service';
 
 export default class TelegramService {
   private _baseUrl;
@@ -21,6 +27,8 @@ export default class TelegramService {
   private _queryService;
 
   private _cryptoProcessorService;
+
+  private _telegramTextFormattedService;
 
   constructor() {
     this._baseUrl = process.env.TELEGRAM_WEBHOOK_HOST;
@@ -39,6 +47,7 @@ export default class TelegramService {
     } as IQueryAttributes<ITelegramQueryHeaders>;
     this._queryService = new QueryService();
     this._cryptoProcessorService = new CryptoProcessorService();
+    this._telegramTextFormattedService = new TelegramTextFormattedService();
   }
 
   public setWebhook = async () => {
@@ -94,40 +103,66 @@ export default class TelegramService {
     }
   };
 
+  public defaultComands = async (
+    body: ITelegramRessponse | ITelegramCommandRessponse
+  ) => {
+    const text = body.message.text;
+    const chatId = body.message.chat.id;
+
+    if (text[0] !== '/') {
+      await this.incorrectCommand(chatId);
+      return;
+    }
+
+    if (text === text.toUpperCase() && text.length < 10) {
+      await this.getCurrencySymbol(chatId, text.split('/')[1]);
+      return;
+    }
+
+    await this.incorrectCommand(body.message.chat.id);
+  };
+
   public listRecent = async (chat_id: number | string) => {
     const cryptocurrencies =
       await this._cryptoProcessorService.getListOfCryptocurrencies();
 
-    if (cryptocurrencies.data === undefined) {
-      this.sendMessage(chat_id, messagesInRussian.ERROR);
-    }
+    const text =
+      this._telegramTextFormattedService.listRecentText(cryptocurrencies);
 
-    let preparedText = messagesInRussian.LIST_RECENT.TITLE;
-    preparedText += cryptocurrencies.data
-      ?.map((it) => `/${it.symbol} ${it.priceInUSD}$`)
-      .join('\n');
-
-    await this.sendMessage(chat_id, preparedText);
+    await this.sendMessage(chat_id, text);
   };
 
   public start = async (chat_id: number | string) => {
-    const preparedText = `${messagesInRussian.START}`;
+    const text = this._telegramTextFormattedService.startText();
 
-    await this.sendMessage(chat_id, preparedText);
+    await this.sendMessage(chat_id, text);
   };
 
   public help = async (chat_id: number | string) => {
-    let preparedText = '';
+    const text = this._telegramTextFormattedService.helpText();
 
-    const help: { [key: string]: string } = messagesInRussian.HELP;
+    await this.sendMessage(chat_id, text);
+  };
 
-    for (const key in help) {
-      if (!help[key]) {
-        continue;
-      }
-      preparedText += help[key];
-    }
+  private incorrectCommand = async (chat_id: number | string) => {
+    const text = this._telegramTextFormattedService.incorrectCommandText();
 
-    await this.sendMessage(chat_id, preparedText);
+    await this.sendMessage(chat_id, text);
+  };
+
+  private getCurrencySymbol = async (
+    chat_id: number | string,
+    symbol: string
+  ) => {
+    const cryptocurrency = await this._cryptoProcessorService.getCryptocurrency(
+      symbol
+    );
+
+    const text = this._telegramTextFormattedService.getCurrencySymbolText(
+      cryptocurrency,
+      symbol
+    );
+
+    await this.sendMessage(chat_id, text);
   };
 }

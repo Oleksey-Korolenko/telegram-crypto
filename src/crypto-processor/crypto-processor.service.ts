@@ -1,6 +1,7 @@
 import { IQueryAttributes, IQueryParams, IQueryResponse } from '../query';
 import EQueryCode from '../query/enum/query.enum';
 import QueryService from '../query/query.service';
+import ECryptoProcessorCode from './enum/crypto-processor-code.enum';
 import {
   ICryptoProcessorCryptocurrency,
   ICryptoProcessorCryptocurrencySingle,
@@ -39,7 +40,7 @@ export default class CryptoProcessorService {
   }
 
   public getListOfCryptocurrencies = async (): Promise<
-    IQueryResponse<ICryptoProcessorPreparedCryptocurrency[]>
+    IQueryResponse<ICryptoProcessorPreparedCryptocurrency[], EQueryCode>
   > => {
     const cryptocurrencies = await this._queryService.sendRequest<
       ICryptoProcessorQueryHeaders,
@@ -84,7 +85,9 @@ export default class CryptoProcessorService {
 
   public getCryptocurrency = async (
     symbol: string
-  ): Promise<IQueryResponse<ICryptoProcessorPreparedCryptocurrency>> => {
+  ): Promise<
+    IQueryResponse<ICryptoProcessorCryptocurrencySingle, ECryptoProcessorCode>
+  > => {
     const cryptocurrency = await this._queryService.sendRequest<
       ICryptoProcessorQueryHeaders,
       ICryptoProcessorQueryResponse<ICryptoProcessorCryptocurrencySingle>,
@@ -101,33 +104,45 @@ export default class CryptoProcessorService {
       {}
     );
 
-    const preparedCryptocurrency =
-      this.preparedResponse<ICryptoProcessorCryptocurrencySingle>(
-        cryptocurrency
-      );
-
     if (
-      preparedCryptocurrency.code === EQueryCode.OK &&
-      preparedCryptocurrency.data !== undefined
+      cryptocurrency.code === EQueryCode.OK &&
+      cryptocurrency.data !== undefined
     ) {
+      if (cryptocurrency.data.status.error_code !== 0) {
+        if (
+          cryptocurrency.data.status.error_code === 400 &&
+          cryptocurrency.data.status.error_message ===
+            `Invalid value for \"symbol\": \"${symbol}\"`
+        ) {
+          return {
+            ...cryptocurrency,
+            code: ECryptoProcessorCode.INVALID_SYMBOL,
+            data: undefined,
+          };
+        }
+        return {
+          ...cryptocurrency,
+          code: ECryptoProcessorCode.BAD_REQUEST,
+          data: undefined,
+        };
+      }
       return {
-        ...preparedCryptocurrency,
-        data: {
-          symbol: preparedCryptocurrency.data[symbol].symbol,
-          priceInUSD: preparedCryptocurrency.data[symbol].quote.USD.price,
-        } as ICryptoProcessorPreparedCryptocurrency,
+        code: ECryptoProcessorCode.OK,
+        message: cryptocurrency.message,
+        data: cryptocurrency.data.data,
       };
     }
 
     return {
-      ...preparedCryptocurrency,
+      ...cryptocurrency,
+      code: ECryptoProcessorCode.BAD_REQUEST,
       data: undefined,
     };
   };
 
   private preparedResponse = <T>(
-    response: IQueryResponse<ICryptoProcessorQueryResponse<T>>
-  ): IQueryResponse<T> => {
+    response: IQueryResponse<ICryptoProcessorQueryResponse<T>, EQueryCode>
+  ): IQueryResponse<T, EQueryCode> => {
     if (response.code === EQueryCode.OK && response.data !== undefined) {
       const data = response.data;
       if (data.status.error_code === 0) {

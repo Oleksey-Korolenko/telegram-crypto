@@ -1,5 +1,3 @@
-import EQueryCode from '../enum/query.enum';
-
 export interface IQueryAttributes<T> {
   hostname: string;
   path: string;
@@ -12,8 +10,8 @@ export interface IQueryParams {
   [key: string]: string;
 }
 
-export interface IQueryResponse<T> {
+export interface IQueryResponse<T, Code> {
   message: string;
-  code: EQueryCode;
+  code: Code;
   data?: T;
 }

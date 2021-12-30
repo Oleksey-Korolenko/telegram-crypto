@@ -8,7 +8,7 @@ export default class QueryService {
     attributes: IQueryAttributes<Headers>,
     params: IQueryParams,
     body?: BodyType
-  ): Promise<IQueryResponse<ResponseType>> => {
+  ): Promise<IQueryResponse<ResponseType, EQueryCode>> => {
     let preparedParams = '';
 
     for (const key in params) {
@@ -19,7 +19,7 @@ export default class QueryService {
       preparedParams += `${key}=${params[key]}&`;
     }
 
-    return await new Promise<IQueryResponse<ResponseType>>(
+    return await new Promise<IQueryResponse<ResponseType, EQueryCode>>(
       (resolve, reject) => {
         const req = request(
           {
@@ -37,7 +37,7 @@ export default class QueryService {
                 code: EQueryCode.OK,
                 message: 'Everything is correct!',
                 data: JSON.parse(responseBody),
-              } as IQueryResponse<ResponseType>);
+              } as IQueryResponse<ResponseType, EQueryCode>);
             });
           }
         );
@@ -50,7 +50,7 @@ export default class QueryService {
           reject({
             code: EQueryCode.BAD_REQUEST,
             message: e.message ?? 'Bad request!',
-          } as IQueryResponse<ResponseType>);
+          } as IQueryResponse<ResponseType, EQueryCode>);
         });
 
         req.end();

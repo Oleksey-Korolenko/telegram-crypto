@@ -27,6 +27,10 @@ export default async (router: typeof Router) => {
           await telegramService.listRecent(body.message.chat.id);
           break;
         }
+        default: {
+          await telegramService.defaultComands(body);
+          break;
+        }
       }
     }
 
