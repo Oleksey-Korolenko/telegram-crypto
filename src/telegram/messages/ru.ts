@@ -2,7 +2,7 @@ const messagesInRussian = {
   LIST_RECENT: {
     TITLE:
       'Вот список из <strong>20</strong> самых популярных крипт на сегодня!\n\n',
-    MAIN_INFO: '/{symbol} {price}$\n',
+    MAIN_INFO: '/{symbol} {price}\n',
   },
   CURRENT_CURRENCY: {
     TITLE: '<strong>Подробная информация об криптовалюте</strong>\n\n',
@@ -11,7 +11,11 @@ const messagesInRussian = {
     SUPLY:
       'Примерное количество монет в обращении: <strong>{circulating_supply}</strong>.\nПримерное общее количетсво монет, существующих на данный момент: <strong>{total_supply}</strong>.\nОжидаемый максимальный когда-либо доступный лимит монет: <strong>{max_supply}</strong>.\n\n',
     QUOTE:
-      'Цена за одну монету в доларах: <strong>{price}$</strong>.\nОбъем перемещений монеты за 24-часа: <strong>{volume_24h}$</strong>.\nИзменение объема перемещения монеты за последние 24 часа: <strong>{volume_change_24h}%</strong>.\nИзменение стоимости монеты за последний час: <strong>{percent_change_1h}%</strong>.\nИзменение стоимости монеты за последниe 24 часа: <strong>{percent_change_24h}%</strong>.\nИзменение стоимости монеты за последние 7 дней: <strong>{percent_change_7d}%</strong>.\nИзменение стоимости монеты за последние 30 дней: <strong>{percent_change_30d}%</strong>.\nИзменение стоимости монеты за последние 60 дней: <strong>{percent_change_60d}%</strong>.\nИзменение стоимости монеты за последние 90 дней: <strong>{percent_change_90d}%</strong>.\nРыночная капитализация: <strong>{market_cap}$</strong>.\nДоминирование рыночной капитализации в долларах: <strong>{market_cap_dominance}%</strong>.\n',
+      'Цена за одну монету в доларах: <strong>{price}</strong>.\nОбъем перемещений монеты за 24-часа: <strong>{volume_24h}</strong>.\nИзменение объема перемещения монеты за последние 24 часа: <strong>{volume_change_24h}</strong>.\nИзменение стоимости монеты за последний час: <strong>{percent_change_1h}</strong>.\nИзменение стоимости монеты за последниe 24 часа: <strong>{percent_change_24h}</strong>.\nИзменение стоимости монеты за последние 7 дней: <strong>{percent_change_7d}</strong>.\nИзменение стоимости монеты за последние 30 дней: <strong>{percent_change_30d}</strong>.\nИзменение стоимости монеты за последние 60 дней: <strong>{percent_change_60d}</strong>.\nИзменение стоимости монеты за последние 90 дней: <strong>{percent_change_90d}</strong>.\nРыночная капитализация: <strong>{market_cap}</strong>.\nДоминирование рыночной капитализации в долларах: <strong>{market_cap_dominance}</strong>.\n',
+    BUTTON: {
+      ADD: 'Добавить в избранное',
+      REMOVE: 'Убрать из избранного',
+    },
   },
   START:
     'Привет, спасибо что воспользовался нашим ботом! Благодаря нам ты сможешь легко отслеживать статистику самых популярных крипт! Используй /help для просмотра актуальных команд!',

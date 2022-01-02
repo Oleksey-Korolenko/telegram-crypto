@@ -1,6 +1,11 @@
 import { Request, Response, Router } from 'express';
-import { ITelegramCommandRessponse, ITelegramRessponse } from '.';
+import {
+  ITelegramButtonResponse,
+  ITelegramCommandRessponse,
+  ITelegramUpdateResponse,
+} from '.';
 import QueryService from '../query/query.service';
+import ETelegramButtonType from './enum/button-type.enum';
 import ETelegramCommandType from './enum/command-type.enum';
 import TelegramService from './telegram.service';
 
@@ -11,25 +16,61 @@ export default async (router: typeof Router) => {
   const queryService = new QueryService();
 
   routes.post('/update', async (req: Request, res: Response) => {
-    const body: ITelegramRessponse | ITelegramCommandRessponse = req.body;
+    const body:
+      | ITelegramUpdateResponse
+      | ITelegramCommandRessponse
+      | ITelegramButtonResponse = req.body;
 
-    if (typeof body.message.text === 'string' && body.message.text[0] === '/') {
-      switch (body.message.text) {
-        case ETelegramCommandType.START: {
-          await telegramService.start(body.message.chat.id);
-          break;
+    if ({}.hasOwnProperty.call(body, 'message')) {
+      const checkedBody = body as unknown as
+        | ITelegramUpdateResponse
+        | ITelegramCommandRessponse;
+      if (
+        typeof checkedBody.message.text === 'string' &&
+        checkedBody.message.text[0] === '/'
+      ) {
+        switch (checkedBody.message.text) {
+          case ETelegramCommandType.START: {
+            await telegramService.start(checkedBody.message.chat.id);
+            break;
+          }
+          case ETelegramCommandType.HELP: {
+            await telegramService.help(checkedBody.message.chat.id);
+            break;
+          }
+          case ETelegramCommandType.LIST_RECENT: {
+            await telegramService.listRecent(checkedBody.message.chat.id);
+            break;
+          }
+          default: {
+            await telegramService.defaultComands(checkedBody);
+            break;
+          }
         }
-        case ETelegramCommandType.HELP: {
-          await telegramService.help(body.message.chat.id);
-          break;
-        }
-        case ETelegramCommandType.LIST_RECENT: {
-          await telegramService.listRecent(body.message.chat.id);
-          break;
-        }
-        default: {
-          await telegramService.defaultComands(body);
-          break;
+      }
+    } else if ({}.hasOwnProperty.call(body, 'callback_query')) {
+      const checkedBody = body as unknown as ITelegramButtonResponse;
+      if (typeof checkedBody.callback_query.data === 'string') {
+        const operationType = checkedBody.callback_query.data.split(':')[0];
+        const item = checkedBody.callback_query.data.split(':')[1];
+
+        switch (operationType) {
+          case ETelegramButtonType.REMOVE_FAVORITE: {
+            // await telegramService.start(checkedBody.message.chat.id);
+            console.log(operationType, 1);
+            break;
+          }
+          case ETelegramButtonType.ADD_FAVORITE: {
+            // await telegramService.help(checkedBody.message.chat.id);
+            console.log(operationType, 2);
+            break;
+          }
+          default: {
+            await telegramService.incorrectCommand(
+              checkedBody.callback_query.message.chat.id
+            );
+            break;
+          }
         }
       }
     }

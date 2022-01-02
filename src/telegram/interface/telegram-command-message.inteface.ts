@@ -1,15 +1,13 @@
-import { ITelegramMessage, ITelegramRessponse } from '.';
-
-export interface ITelegramCommandMessageEntity {
-  offset: number;
-  length: number;
-  type: string;
-}
+import {
+  ITelegramMessage,
+  ITelegramMessageEntity,
+  ITelegramUpdateResponse,
+} from '.';
 
 export interface ITelegramCommandMessage extends ITelegramMessage {
-  entities: ITelegramCommandMessageEntity[];
+  entities: ITelegramMessageEntity[];
 }
 
-export interface ITelegramCommandRessponse extends ITelegramRessponse {
+export interface ITelegramCommandRessponse extends ITelegramUpdateResponse {
   message: ITelegramCommandMessage;
 }

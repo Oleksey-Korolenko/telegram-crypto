@@ -1,18 +1,15 @@
 import {
-  IArgsForPreparedText,
   ITelegramCommandRessponse,
   ITelegramQueryBody,
   ITelegramQueryHeaders,
-  ITelegramRessponse,
-  ITelegramWebhookResponse,
+  ITelegramResponse,
+  ITelegramTextFormatterExtra,
+  ITelegramUpdateResponse,
 } from '.';
 import CryptoProcessorService from '../crypto-processor/crypto-processor.service';
-import ECryptoProcessorCode from '../crypto-processor/enum/crypto-processor-code.enum';
-import { ICryptoProcessorCryptocurrencySingle } from '../crypto-processor/interface';
-import { IQueryAttributes, IQueryResponse } from '../query';
+import { IQueryAttributes } from '../query';
 import EQueryCode from '../query/enum/query.enum';
 import QueryService from '../query/query.service';
-import messagesInRussian from './messages/ru';
 import TelegramTextFormattedService from './telegram-text-formatted.service';
 
 export default class TelegramService {
@@ -53,7 +50,7 @@ export default class TelegramService {
   public setWebhook = async () => {
     const response = await this._queryService.sendRequest<
       {},
-      ITelegramWebhookResponse,
+      ITelegramResponse,
       {}
     >(
       {
@@ -75,10 +72,14 @@ export default class TelegramService {
     }
   };
 
-  private sendMessage = async (chat_id: number | string, text: string) => {
+  private sendMessage = async (
+    chat_id: number | string,
+    text: string,
+    extra?: ITelegramTextFormatterExtra
+  ) => {
     const response = await this._queryService.sendRequest<
       {},
-      ITelegramWebhookResponse,
+      ITelegramResponse,
       ITelegramQueryBody
     >(
       {
@@ -91,6 +92,7 @@ export default class TelegramService {
         chat_id,
         text,
         parse_mode: 'HTML',
+        ...extra,
       }
     );
 
@@ -104,7 +106,7 @@ export default class TelegramService {
   };
 
   public defaultComands = async (
-    body: ITelegramRessponse | ITelegramCommandRessponse
+    body: ITelegramUpdateResponse | ITelegramCommandRessponse
   ) => {
     const text = body.message.text;
     const chatId = body.message.chat.id;
@@ -119,7 +121,7 @@ export default class TelegramService {
       return;
     }
 
-    await this.incorrectCommand(body.message.chat.id);
+    await this.incorrectCommand(chatId);
   };
 
   public listRecent = async (chat_id: number | string) => {
@@ -144,7 +146,7 @@ export default class TelegramService {
     await this.sendMessage(chat_id, text);
   };
 
-  private incorrectCommand = async (chat_id: number | string) => {
+  public incorrectCommand = async (chat_id: number | string) => {
     const text = this._telegramTextFormattedService.incorrectCommandText();
 
     await this.sendMessage(chat_id, text);
@@ -158,11 +160,14 @@ export default class TelegramService {
       symbol
     );
 
-    const text = this._telegramTextFormattedService.getCurrencySymbolText(
-      cryptocurrency,
-      symbol
-    );
+    const { text, extra } =
+      this._telegramTextFormattedService.getCurrencySymbolText(
+        cryptocurrency,
+        symbol,
+        false,
+        22
+      );
 
-    await this.sendMessage(chat_id, text);
+    await this.sendMessage(chat_id, text, extra);
   };
 }

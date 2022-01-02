@@ -6,6 +6,12 @@ export interface ITelegramMessageFrom {
   language_code: string;
 }
 
+export interface ITelegramMessageEntity {
+  offset: number;
+  length: number;
+  type: string;
+}
+
 export interface ITelegramMessageChat {
   id: number;
   first_name: string;
@@ -21,7 +27,7 @@ export interface ITelegramMessage {
   text: string;
 }
 
-export interface ITelegramRessponse {
+export interface ITelegramUpdateResponse {
   update_id: number;
   message: ITelegramMessage;
 }

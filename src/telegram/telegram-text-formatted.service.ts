@@ -1,4 +1,10 @@
-import { IArgsForPreparedText } from '.';
+import {
+  IArgsForPreparedText,
+  IInlineKeyboardButton,
+  IInlineKeyboardMarkup,
+  ITelegramTextFormatterExtra,
+  ITelegramTextFormatterResponse,
+} from '.';
 import ECryptoProcessorCode from '../crypto-processor/enum/crypto-processor-code.enum';
 import {
   ICryptoProcessorCryptocurrency,
@@ -34,7 +40,7 @@ export default class TelegramTextFormattedService {
       cryptocurrencies.data.forEach((it) => {
         text += this.preparedText(messagesInRussian.LIST_RECENT.MAIN_INFO, {
           symbol: it.symbol,
-          price: it.priceInUSD,
+          price: `${it.priceInUSD}$`,
         });
       });
     }
@@ -70,9 +76,12 @@ export default class TelegramTextFormattedService {
       ICryptoProcessorCryptocurrencySingle,
       ECryptoProcessorCode
     >,
-    symbol: string
-  ): string => {
+    symbol: string,
+    alreadyExist: boolean,
+    idFavorite: number
+  ): ITelegramTextFormatterResponse => {
     let text = '';
+    let extra: ITelegramTextFormatterExtra = {};
 
     switch (cryptocurrency.code) {
       case ECryptoProcessorCode.BAD_REQUEST: {
@@ -115,25 +124,52 @@ export default class TelegramTextFormattedService {
           const quote = currentData.quote.USD;
 
           text += this.preparedText(messagesInRussian.CURRENT_CURRENCY.QUOTE, {
-            price: quote.price,
-            volume_24h: quote.volume_24h,
-            volume_change_24h: quote.volume_change_24h,
-            percent_change_1h: quote.percent_change_1h,
-            percent_change_24h: quote.percent_change_24h,
-            percent_change_7d: quote.percent_change_7d,
-            percent_change_30d: quote.percent_change_30d,
-            percent_change_60d: quote.percent_change_60d,
-            percent_change_90d: quote.percent_change_90d,
-            market_cap: quote.market_cap,
-            market_cap_dominance: quote.market_cap_dominance,
+            price: `${quote.price}$`,
+            volume_24h: `${quote.volume_24h}$`,
+            volume_change_24h: `${quote.volume_change_24h}%`,
+            percent_change_1h: `${quote.percent_change_1h}%`,
+            percent_change_24h: `${quote.percent_change_24h}%`,
+            percent_change_7d: `${quote.percent_change_7d}%`,
+            percent_change_30d: `${quote.percent_change_30d}%`,
+            percent_change_60d: `${quote.percent_change_60d}%`,
+            percent_change_90d: `${quote.percent_change_90d}%`,
+            market_cap: `${quote.market_cap}$`,
+            market_cap_dominance: `${quote.market_cap_dominance}%`,
           });
+
+          extra.reply_markup = this.getCurrencySymbolKeyboardMarkup(
+            alreadyExist,
+            idFavorite
+          );
         }
 
         break;
       }
     }
 
-    return text;
+    return { text, extra };
+  };
+
+  private getCurrencySymbolKeyboardMarkup = (
+    alreadyExist: boolean,
+    idFavorite: number
+  ): IInlineKeyboardMarkup => {
+    return {
+      inline_keyboard: [
+        alreadyExist && [
+          {
+            text: messagesInRussian.CURRENT_CURRENCY.BUTTON.REMOVE,
+            callback_data: `remove_favorite:${idFavorite}`,
+          },
+        ],
+        !alreadyExist && [
+          {
+            text: messagesInRussian.CURRENT_CURRENCY.BUTTON.ADD,
+            callback_data: `add_favorite:${idFavorite}`,
+          },
+        ],
+      ].filter(Boolean) as IInlineKeyboardButton[][],
+    };
   };
 
   private preparedText = (text: string, args: IArgsForPreparedText): string => {
