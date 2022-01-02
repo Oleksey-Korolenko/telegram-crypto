@@ -1,4 +1,5 @@
 import { Request, Response, Router } from 'express';
+import { Mongoose } from 'mongoose';
 import {
   ITelegramButtonResponse,
   ITelegramCommandRessponse,
@@ -9,7 +10,7 @@ import ETelegramButtonType from './enum/button-type.enum';
 import ETelegramCommandType from './enum/command-type.enum';
 import TelegramService from './telegram.service';
 
-export default async (router: typeof Router) => {
+export default async (router: typeof Router, db: Mongoose) => {
   const routes = router();
   const telegramService = new TelegramService();
   await telegramService.setWebhook();
