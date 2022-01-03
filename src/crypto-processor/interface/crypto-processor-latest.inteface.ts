@@ -21,6 +21,7 @@ export interface ICryptoProcessorCryptocurrencyQuote {
 }
 
 export interface ICryptoProcessorCryptocurrency {
+  id: number;
   symbol: string;
   name: string;
   is_active: number;

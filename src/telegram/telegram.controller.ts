@@ -1,5 +1,4 @@
 import { Request, Response, Router } from 'express';
-import { Mongoose } from 'mongoose';
 import {
   ITelegramButtonResponse,
   ITelegramCommandRessponse,
@@ -10,7 +9,7 @@ import ETelegramButtonType from './enum/button-type.enum';
 import ETelegramCommandType from './enum/command-type.enum';
 import TelegramService from './telegram.service';
 
-export default async (router: typeof Router, db: Mongoose) => {
+export default async (router: typeof Router) => {
   const routes = router();
   const telegramService = new TelegramService();
   await telegramService.setWebhook();
@@ -30,7 +29,7 @@ export default async (router: typeof Router, db: Mongoose) => {
         typeof checkedBody.message.text === 'string' &&
         checkedBody.message.text[0] === '/'
       ) {
-        switch (checkedBody.message.text) {
+        switch (checkedBody.message.text.split('@')[0]) {
           case ETelegramCommandType.START: {
             await telegramService.start(checkedBody.message.chat.id);
             break;
@@ -57,13 +56,26 @@ export default async (router: typeof Router, db: Mongoose) => {
 
         switch (operationType) {
           case ETelegramButtonType.REMOVE_FAVORITE: {
-            // await telegramService.start(checkedBody.message.chat.id);
-            console.log(operationType, 1);
+            const cryptocurrencyId = item.split(',')[0];
+            const symbol = item.split(',')[1];
+            await telegramService.removeFromFavoriteCryptocurrency(
+              checkedBody.callback_query.message.chat.id,
+              checkedBody.callback_query.message.message_id,
+              cryptocurrencyId,
+              symbol
+            );
             break;
           }
           case ETelegramButtonType.ADD_FAVORITE: {
-            // await telegramService.help(checkedBody.message.chat.id);
-            console.log(operationType, 2);
+            const cryptocurrencyId = item.split(',')[0];
+            const symbol = item.split(',')[1];
+            await telegramService.saveFavoriteCryptocurrency(
+              checkedBody.callback_query.message.chat.id,
+              checkedBody.callback_query.message.message_id,
+              checkedBody.callback_query.from.id,
+              Number(cryptocurrencyId),
+              symbol
+            );
             break;
           }
           default: {

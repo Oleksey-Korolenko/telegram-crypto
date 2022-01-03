@@ -13,6 +13,7 @@ import {
 } from '../crypto-processor/interface';
 import { IQueryResponse } from '../query';
 import EQueryCode from '../query/enum/query.enum';
+import ETelegramButtonType from './enum/button-type.enum';
 import messagesInRussian from './messages/ru';
 
 export default class TelegramTextFormattedService {
@@ -77,8 +78,8 @@ export default class TelegramTextFormattedService {
       ECryptoProcessorCode
     >,
     symbol: string,
-    alreadyExist: boolean,
-    idFavorite: number
+    alreadyExist?: boolean,
+    idFavorite?: number | string
   ): ITelegramTextFormatterResponse => {
     let text = '';
     let extra: ITelegramTextFormatterExtra = {};
@@ -137,10 +138,13 @@ export default class TelegramTextFormattedService {
             market_cap_dominance: `${quote.market_cap_dominance}%`,
           });
 
-          extra.reply_markup = this.getCurrencySymbolKeyboardMarkup(
-            alreadyExist,
-            idFavorite
-          );
+          if (alreadyExist !== undefined && idFavorite !== undefined) {
+            extra.reply_markup = this.getCurrencySymbolKeyboardMarkup(
+              alreadyExist,
+              idFavorite,
+              currentData.symbol
+            );
+          }
         }
 
         break;
@@ -150,26 +154,63 @@ export default class TelegramTextFormattedService {
     return { text, extra };
   };
 
+  public favoriteCryptocurrencyNoticeText = (
+    symbol: string,
+    typeOperation: ETelegramButtonType
+  ): string => {
+    let text = '';
+
+    switch (typeOperation) {
+      case ETelegramButtonType.ADD_FAVORITE: {
+        text += this.preparedText(
+          messagesInRussian.CURRENT_CURRENCY.NOTICE.ADD,
+          {
+            symbol,
+          }
+        );
+
+        break;
+      }
+      case ETelegramButtonType.REMOVE_FAVORITE: {
+        text += this.preparedText(
+          messagesInRussian.CURRENT_CURRENCY.NOTICE.REMOVE,
+          {
+            symbol,
+          }
+        );
+
+        break;
+      }
+    }
+
+    return text;
+  };
+
   private getCurrencySymbolKeyboardMarkup = (
     alreadyExist: boolean,
-    idFavorite: number
+    idFavorite: number | string,
+    symbol: string
   ): IInlineKeyboardMarkup => {
     return {
       inline_keyboard: [
         alreadyExist && [
           {
             text: messagesInRussian.CURRENT_CURRENCY.BUTTON.REMOVE,
-            callback_data: `remove_favorite:${idFavorite}`,
+            callback_data: `remove_favorite:${idFavorite},${symbol}`,
           },
         ],
         !alreadyExist && [
           {
             text: messagesInRussian.CURRENT_CURRENCY.BUTTON.ADD,
-            callback_data: `add_favorite:${idFavorite}`,
+            callback_data: `add_favorite:${idFavorite},${symbol}`,
           },
         ],
       ].filter(Boolean) as IInlineKeyboardButton[][],
     };
+  };
+
+  public badRequestText = (): string => {
+    return this.preparedText(messagesInRussian.ERROR.DEFAULT, {});
   };
 
   private preparedText = (text: string, args: IArgsForPreparedText): string => {

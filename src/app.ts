@@ -10,8 +10,7 @@ const bootstrap = async () => {
   dotenv.config();
 
   const mongo = new Mongo();
-
-  const db = await mongo.getConnection();
+  await mongo.getConnection();
 
   await app.use(express.json({ limit: '3mb' }));
 
@@ -24,10 +23,10 @@ const bootstrap = async () => {
     for (const name in controllers) {
       app.use(
         `/api/${name}`,
-        await controllers[name][`${name}.controller.ts`].default(router, db)
+        await controllers[name][`${name}.controller.ts`].default(router)
       );
 
-      console.log(`${name} initialized`);
+      console.log(`Module ${name} initialized`);
     }
   } catch (e) {
     console.error(e);

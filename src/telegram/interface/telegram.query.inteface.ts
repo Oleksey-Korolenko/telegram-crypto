@@ -9,6 +9,10 @@ export interface ITelegramQueryBody extends ITelegramTextFormatterExtra {
   text: string;
 }
 
+export interface ITelegramUpdateQueryBody extends ITelegramQueryBody {
+  message_id: number | string;
+}
+
 export interface ITelegramResponse {
   ok: boolean;
   result: boolean;
