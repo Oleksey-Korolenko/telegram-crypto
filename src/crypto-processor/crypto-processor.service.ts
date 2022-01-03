@@ -83,6 +83,59 @@ export default class CryptoProcessorService {
     };
   };
 
+  public getListOfFavoriteCryptocurrencies = async (
+    listOfIds: number[]
+  ): Promise<
+    IQueryResponse<ICryptoProcessorPreparedCryptocurrency[], EQueryCode>
+  > => {
+    const cryptocurrencies = await this._queryService.sendRequest<
+      ICryptoProcessorQueryHeaders,
+      ICryptoProcessorQueryResponse<ICryptoProcessorCryptocurrency[]>,
+      IQueryParams
+    >(
+      {
+        ...this._baseAttributes,
+        path: '/v1/cryptocurrency/quotes/latest',
+        method: 'GET',
+      },
+      {
+        id: listOfIds.join(','),
+      },
+      {}
+    );
+
+    const preparedCryptocurrencies =
+      this.preparedResponse<ICryptoProcessorCryptocurrency[]>(cryptocurrencies);
+
+    if (
+      preparedCryptocurrencies.code === EQueryCode.OK &&
+      preparedCryptocurrencies.data !== undefined
+    ) {
+      const data: ICryptoProcessorPreparedCryptocurrency[] = [];
+
+      for (const key in preparedCryptocurrencies.data) {
+        if (!preparedCryptocurrencies.data[key]) {
+          continue;
+        }
+
+        data.push({
+          symbol: preparedCryptocurrencies.data[key].symbol,
+          priceInUSD: preparedCryptocurrencies.data[key].quote.USD.price,
+        });
+      }
+
+      return {
+        ...preparedCryptocurrencies,
+        data,
+      };
+    }
+
+    return {
+      ...preparedCryptocurrencies,
+      data: undefined,
+    };
+  };
+
   public getCryptocurrency = async (
     symbol: string
   ): Promise<

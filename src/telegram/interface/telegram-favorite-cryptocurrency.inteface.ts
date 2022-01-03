@@ -6,7 +6,7 @@ export interface ITelegramFavoriteCryptocurrency {
   user: Types.ObjectId;
 }
 
-export interface IPopulatedTelegramFavoriteCryptocurrency {
-  coin_market_cap: ITelegramCryptocurrency | null;
-  user: ITelegramUser | null;
+export interface ITelegramFavoriteCryptocurrencyRelations {
+  coin_market_cap: ITelegramCryptocurrency[];
+  user: ITelegramUser[];
 }

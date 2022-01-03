@@ -42,6 +42,13 @@ export default async (router: typeof Router) => {
             await telegramService.listRecent(checkedBody.message.chat.id);
             break;
           }
+          case ETelegramCommandType.LIST_FAVORITE: {
+            await telegramService.listFavorite(
+              checkedBody.message.chat.id,
+              checkedBody.message.from.id
+            );
+            break;
+          }
           default: {
             await telegramService.defaultComands(checkedBody);
             break;

@@ -2,6 +2,7 @@ const messagesInRussian = {
   LIST_RECENT: {
     TITLE:
       'Вот список из <strong>20</strong> самых популярных крипт на сегодня!\n\n',
+    FAVORITE: '<strong>Вот список ваших избранных крипт:</strong>\n\n',
     MAIN_INFO: '/{symbol} {price}\n',
   },
   CURRENT_CURRENCY: {
@@ -28,6 +29,7 @@ const messagesInRussian = {
     START: '/start - приветствие прекрасного тебя!\n',
     HELP: '/help - краткое описание возможностей нашего бота!\n',
     LIST_RECENT: '/listrecent - cписок из 20 самых популярных крипт!\n',
+    LIST_FAVORITE: '/listfavorite - cписок твоих избранных крипт!\n',
   },
   ERROR: {
     INCORRECT_COMMAND: 'Нам очень жаль, но наш бот не знает такую команду(',
@@ -35,6 +37,8 @@ const messagesInRussian = {
       'Нам очень жаль, но как мы не рылись в наших чертогах разума мы не смогли найти криптовалюты с таким названием!',
     DEFAULT:
       'Нам очень жаль но что-то пошло не так! Напиши нам на <strong>example@gmail.com</strong> и мы обязательно это исправим!',
+    EMPTY_FAVORITE:
+      'Оу, кажется вы еще не добавили ни одну крипту в избранное!',
   },
 };
 
