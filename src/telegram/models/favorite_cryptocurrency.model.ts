@@ -3,17 +3,19 @@ import { ITelegramFavoriteCryptocurrency } from '..';
 
 const favoriteCryptocurrencySchema =
   new mongoose.Schema<ITelegramFavoriteCryptocurrency>({
-    id_in_coin_market_cap: {
-      type: Number,
+    coin_market_cap: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'cryptocurrencies',
       required: true,
     },
-    user_tg_id: {
-      type: Number,
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'users',
       required: true,
     },
   });
 
 export const FavoriteCryptocurrency = mongoose.model(
-  'favorite_cryptocurrency',
+  'favorite_cryptocurrencies',
   favoriteCryptocurrencySchema
 );

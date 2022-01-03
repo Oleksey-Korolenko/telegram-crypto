@@ -1,4 +1,12 @@
+import { Types } from 'mongoose';
+import { ITelegramCryptocurrency, ITelegramUser } from '.';
+
 export interface ITelegramFavoriteCryptocurrency {
-  id_in_coin_market_cap: number;
-  user_tg_id: number;
+  coin_market_cap: Types.ObjectId;
+  user: Types.ObjectId;
+}
+
+export interface IPopulatedTelegramFavoriteCryptocurrency {
+  coin_market_cap: ITelegramCryptocurrency | null;
+  user: ITelegramUser | null;
 }

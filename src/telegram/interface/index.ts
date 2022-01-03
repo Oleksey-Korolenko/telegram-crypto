@@ -5,3 +5,5 @@ export * from './telegram.service.inteface';
 export * from './telegram-inline-keyboard-button.inteface';
 export * from './telegram-button-message.inteface';
 export * from './telegram-favorite-cryptocurrency.inteface';
+export * from './telegram-cryptocurrency.inteface';
+export * from './telegram-user.inteface';

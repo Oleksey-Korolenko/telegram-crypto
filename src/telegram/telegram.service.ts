@@ -12,7 +12,7 @@ import { IQueryAttributes } from '../query';
 import EQueryCode from '../query/enum/query.enum';
 import QueryService from '../query/query.service';
 import ETelegramButtonType from './enum/button-type.enum';
-import { FavoriteCryptocurrency } from './models';
+import { Cryptocurrency, FavoriteCryptocurrency, User } from './models';
 import TelegramTextFormattedService from './telegram-text-formatted.service';
 
 export default class TelegramService {
@@ -221,22 +221,42 @@ export default class TelegramService {
       return;
     }
 
-    const favoriteCryptocurrency = await FavoriteCryptocurrency.findOne({
+    const cryptocurrencyMongo = await Cryptocurrency.findOne({
       id_in_coin_market_cap: cryptocurrency.data[symbol].id,
+    }).exec();
+
+    const user = await User.findOne({
       user_tg_id: user_id,
     }).exec();
 
-    const { text, extra } =
-      this._telegramTextFormattedService.getCurrencySymbolText(
-        cryptocurrency,
-        symbol,
-        favoriteCryptocurrency === null ? false : true,
-        favoriteCryptocurrency === null
-          ? cryptocurrency.data[symbol].id
-          : favoriteCryptocurrency._id
-      );
+    if (user === null || cryptocurrencyMongo === null) {
+      const { text, extra } =
+        this._telegramTextFormattedService.getCurrencySymbolText(
+          cryptocurrency,
+          symbol,
+          false,
+          cryptocurrency.data[symbol].id
+        );
 
-    await this.sendMessage(chat_id, text, extra);
+      await this.sendMessage(chat_id, text, extra);
+    } else {
+      const favoriteCryptocurrency = await FavoriteCryptocurrency.findOne({
+        coin_market_cap: cryptocurrencyMongo._id,
+        user: user._id,
+      }).exec();
+
+      const { text, extra } =
+        this._telegramTextFormattedService.getCurrencySymbolText(
+          cryptocurrency,
+          symbol,
+          favoriteCryptocurrency === null ? false : true,
+          favoriteCryptocurrency === null
+            ? cryptocurrency.data[symbol].id
+            : favoriteCryptocurrency._id
+        );
+
+      await this.sendMessage(chat_id, text, extra);
+    }
   };
 
   public saveFavoriteCryptocurrency = async (
@@ -246,26 +266,58 @@ export default class TelegramService {
     cryptocurrency_id: number,
     symbol: string
   ) => {
-    const favoriteCryptocurrency = new FavoriteCryptocurrency({
+    let cryptocurrency = await Cryptocurrency.findOne({
       id_in_coin_market_cap: cryptocurrency_id,
+    }).exec();
+
+    let user = await User.findOne({
       user_tg_id: user_id,
-    });
+    }).exec();
 
-    await favoriteCryptocurrency
-      .save()
-      .then(async (res) => {
-        const text =
-          this._telegramTextFormattedService.favoriteCryptocurrencyNoticeText(
-            symbol,
-            ETelegramButtonType.ADD_FAVORITE
-          );
-
-        await this.updateMessage(chat_id, message_id, text);
-      })
-      .catch(async (err) => {
-        console.log(err);
-        await this.badRequest(chat_id);
+    if (user === null) {
+      const preparedUser = new User({
+        user_tg_id: user_id,
       });
+
+      await preparedUser.save().then(async (res) => {
+        user = res;
+      });
+    }
+
+    if (cryptocurrency === null) {
+      const preparedCryptocurrency = new Cryptocurrency({
+        id_in_coin_market_cap: cryptocurrency_id,
+      });
+
+      await preparedCryptocurrency.save().then(async (res) => {
+        cryptocurrency = res;
+      });
+    }
+
+    if (user === null || cryptocurrency === null) {
+      await this.badRequest(chat_id);
+    } else {
+      const favoriteCryptocurrency = new FavoriteCryptocurrency({
+        coin_market_cap: cryptocurrency._id,
+        user: user._id,
+      });
+
+      await favoriteCryptocurrency
+        .save()
+        .then(async (res) => {
+          const text =
+            this._telegramTextFormattedService.favoriteCryptocurrencyNoticeText(
+              symbol,
+              ETelegramButtonType.ADD_FAVORITE
+            );
+
+          await this.updateMessage(chat_id, message_id, text);
+        })
+        .catch(async (err) => {
+          console.log(err);
+          await this.badRequest(chat_id);
+        });
+    }
   };
 
   public removeFromFavoriteCryptocurrency = async (
