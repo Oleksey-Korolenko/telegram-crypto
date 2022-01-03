@@ -7,7 +7,6 @@ import {
 } from '.';
 import ECryptoProcessorCode from '../crypto-processor/enum/crypto-processor-code.enum';
 import {
-  ICryptoProcessorCryptocurrency,
   ICryptoProcessorCryptocurrencySingle,
   ICryptoProcessorPreparedCryptocurrency,
 } from '../crypto-processor/interface';

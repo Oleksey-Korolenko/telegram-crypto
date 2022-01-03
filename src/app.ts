@@ -17,13 +17,14 @@ const bootstrap = async () => {
   try {
     const controllers = requireAll({
       dirname: __dirname,
-      filter: /^.+\.controller\.ts$/,
+      filter: /^.+\.(controller)\.(t|j)s$/,
+      recursive: true,
     });
 
     for (const name in controllers) {
       app.use(
         `/api/${name}`,
-        await controllers[name][`${name}.controller.ts`].default(router)
+        await controllers[name].controller.default(router)
       );
 
       console.log(`Module ${name} initialized`);
