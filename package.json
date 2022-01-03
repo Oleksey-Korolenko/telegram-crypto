@@ -5,10 +5,8 @@
   "main": "src/server.ts",
   "scripts": {
     "dev": "nodemon --exec ts-node src/server.ts",
-    "test": "jest",
     "start": "npm run build && node dist/server.js",
-    "build": "tsc --build",
-    "heroku-postbuild": "npm run build"
+    "build": "node node_modules/typescript/bin/tsc --build"
   },
   "dependencies": {
     "dotenv": "^10.0.0",
