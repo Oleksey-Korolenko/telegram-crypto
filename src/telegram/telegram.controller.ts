@@ -57,40 +57,43 @@ export default async (router: typeof Router) => {
       }
     } else if ({}.hasOwnProperty.call(body, 'callback_query')) {
       const checkedBody = body as unknown as ITelegramButtonResponse;
-      if (typeof checkedBody.callback_query.data === 'string') {
-        const operationType = checkedBody.callback_query.data.split(':')[0];
-        const item = checkedBody.callback_query.data.split(':')[1];
 
-        switch (operationType) {
-          case ETelegramButtonType.REMOVE_FAVORITE: {
-            const cryptocurrencyId = item.split(',')[0];
-            const symbol = item.split(',')[1];
-            await telegramService.removeFromFavoriteCryptocurrency(
-              checkedBody.callback_query.message.chat.id,
-              checkedBody.callback_query.message.message_id,
-              cryptocurrencyId,
-              symbol
-            );
-            break;
-          }
-          case ETelegramButtonType.ADD_FAVORITE: {
-            const cryptocurrencyId = item.split(',')[0];
-            const symbol = item.split(',')[1];
-            await telegramService.saveFavoriteCryptocurrency(
-              checkedBody.callback_query.message.chat.id,
-              checkedBody.callback_query.message.message_id,
-              checkedBody.callback_query.from.id,
-              Number(cryptocurrencyId),
-              symbol
-            );
-            break;
-          }
-          default: {
-            await telegramService.incorrectCommand(
-              checkedBody.callback_query.message.chat.id
-            );
-            break;
-          }
+      if (typeof checkedBody.callback_query.data !== 'string') {
+        return queryService.sendAnswer<{}>(200, {}, res);
+      }
+
+      const operationType = checkedBody.callback_query.data.split(':')[0];
+      const item = checkedBody.callback_query.data.split(':')[1];
+
+      switch (operationType) {
+        case ETelegramButtonType.REMOVE_FAVORITE: {
+          const cryptocurrencyId = item.split(',')[0];
+          const symbol = item.split(',')[1];
+          await telegramService.removeFromFavoriteCryptocurrency(
+            checkedBody.callback_query.message.chat.id,
+            checkedBody.callback_query.message.message_id,
+            cryptocurrencyId,
+            symbol
+          );
+          break;
+        }
+        case ETelegramButtonType.ADD_FAVORITE: {
+          const cryptocurrencyId = item.split(',')[0];
+          const symbol = item.split(',')[1];
+          await telegramService.saveFavoriteCryptocurrency(
+            checkedBody.callback_query.message.chat.id,
+            checkedBody.callback_query.message.message_id,
+            checkedBody.callback_query.from.id,
+            Number(cryptocurrencyId),
+            symbol
+          );
+          break;
+        }
+        default: {
+          await telegramService.incorrectCommand(
+            checkedBody.callback_query.message.chat.id
+          );
+          break;
         }
       }
     }

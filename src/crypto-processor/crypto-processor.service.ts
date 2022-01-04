@@ -158,65 +158,66 @@ export default class CryptoProcessorService {
     );
 
     if (
-      cryptocurrency.code === EQueryCode.OK &&
-      cryptocurrency.data !== undefined
+      cryptocurrency.code !== EQueryCode.OK ||
+      cryptocurrency.data === undefined
     ) {
-      if (cryptocurrency.data.status.error_code !== 0) {
-        if (
-          cryptocurrency.data.status.error_code === 400 &&
-          cryptocurrency.data.status.error_message ===
-            `Invalid value for \"symbol\": \"${symbol}\"`
-        ) {
-          return {
-            ...cryptocurrency,
-            code: ECryptoProcessorCode.INVALID_SYMBOL,
-            data: undefined,
-          };
-        }
-        return {
-          ...cryptocurrency,
-          code: ECryptoProcessorCode.BAD_REQUEST,
-          data: undefined,
-        };
-      }
       return {
-        code: ECryptoProcessorCode.OK,
-        message: cryptocurrency.message,
-        data: cryptocurrency.data.data,
+        ...cryptocurrency,
+        code: ECryptoProcessorCode.BAD_REQUEST,
+        data: undefined,
+      };
+    }
+
+    if (
+      cryptocurrency.data.status.error_code === 400 &&
+      cryptocurrency.data.status.error_message ===
+        `Invalid value for \"symbol\": \"${symbol}\"`
+    ) {
+      return {
+        ...cryptocurrency,
+        code: ECryptoProcessorCode.INVALID_SYMBOL,
+        data: undefined,
+      };
+    } else if (cryptocurrency.data.status.error_code !== 0) {
+      return {
+        ...cryptocurrency,
+        code: ECryptoProcessorCode.BAD_REQUEST,
+        data: undefined,
       };
     }
 
     return {
-      ...cryptocurrency,
-      code: ECryptoProcessorCode.BAD_REQUEST,
-      data: undefined,
+      code: ECryptoProcessorCode.OK,
+      message: cryptocurrency.message,
+      data: cryptocurrency.data.data,
     };
   };
 
   private preparedResponse = <T>(
     response: IQueryResponse<ICryptoProcessorQueryResponse<T>, EQueryCode>
   ): IQueryResponse<T, EQueryCode> => {
-    if (response.code === EQueryCode.OK && response.data !== undefined) {
-      const data = response.data;
-      if (data.status.error_code === 0) {
-        return {
-          code: response.code,
-          message: response.message,
-          data: data.data,
-        };
-      } else {
-        return {
-          code: EQueryCode.BAD_REQUEST,
-          message:
-            data.status.error_message === null
-              ? 'Bad request!'
-              : data.status.error_message,
-        };
-      }
-    } else {
+    if (response.code !== EQueryCode.OK || response.data === undefined) {
       return {
         code: response.code,
         message: response.message,
+      };
+    }
+
+    const data = response.data;
+
+    if (data.status.error_code === 0) {
+      return {
+        code: response.code,
+        message: response.message,
+        data: data.data,
+      };
+    } else {
+      return {
+        code: EQueryCode.BAD_REQUEST,
+        message:
+          data.status.error_message === null
+            ? 'Bad request!'
+            : data.status.error_message,
       };
     }
   };

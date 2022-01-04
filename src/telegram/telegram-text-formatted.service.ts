@@ -36,24 +36,26 @@ export default class TelegramTextFormattedService {
 
     if (isListEmpty) {
       text += this.preparedText(messagesInRussian.ERROR.EMPTY_FAVORITE, {});
-    } else {
-      if (cryptocurrencies?.data === undefined) {
-        text += this.preparedText(messagesInRussian.ERROR.DEFAULT, {});
-      } else {
-        if (isListFavorite) {
-          text += this.preparedText(messagesInRussian.LIST_RECENT.FAVORITE, {});
-        } else {
-          text += this.preparedText(messagesInRussian.LIST_RECENT.TITLE, {});
-        }
-
-        cryptocurrencies.data.forEach((it) => {
-          text += this.preparedText(messagesInRussian.LIST_RECENT.MAIN_INFO, {
-            symbol: it.symbol,
-            price: `${it.priceInUSD}$`,
-          });
-        });
-      }
+      return text;
     }
+
+    if (cryptocurrencies?.data === undefined) {
+      text += this.preparedText(messagesInRussian.ERROR.DEFAULT, {});
+      return text;
+    }
+
+    if (isListFavorite) {
+      text += this.preparedText(messagesInRussian.LIST_RECENT.FAVORITE, {});
+    } else {
+      text += this.preparedText(messagesInRussian.LIST_RECENT.TITLE, {});
+    }
+
+    cryptocurrencies.data.forEach((it) => {
+      text += this.preparedText(messagesInRussian.LIST_RECENT.MAIN_INFO, {
+        symbol: it.symbol,
+        price: `${it.priceInUSD}$`,
+      });
+    });
 
     return text;
   };

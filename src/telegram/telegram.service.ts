@@ -355,46 +355,50 @@ export default class TelegramService {
 
     if (user === null) {
       text = this._telegramTextFormattedService.listRecentText(false, true);
-    } else {
-      const favoriteCryptocurrencies =
-        await FavoriteCryptocurrency.aggregate<ITelegramFavoriteCryptocurrencyRelations>(
-          [
-            {
-              $lookup: {
-                from: 'cryptocurrencies',
-                localField: 'coin_market_cap',
-                foreignField: '_id',
-                as: 'coin_market_cap',
-              },
-            },
-            {
-              $match: {
-                coin_market_cap: { $exists: true, $type: 'array', $ne: [] },
-                user: {
-                  $eq: user._id,
-                },
-              },
-            },
-          ]
-        );
-
-      if (favoriteCryptocurrencies.length === 0) {
-        text = this._telegramTextFormattedService.listRecentText(false, true);
-      } else {
-        const cryptocurrencies =
-          await this._cryptoProcessorService.getListOfFavoriteCryptocurrencies(
-            favoriteCryptocurrencies.map(
-              (it) => it.coin_market_cap[0].id_in_coin_market_cap
-            )
-          );
-
-        text = this._telegramTextFormattedService.listRecentText(
-          false,
-          true,
-          cryptocurrencies
-        );
-      }
+      await this.sendMessage(chat_id, text);
+      return;
     }
+
+    const favoriteCryptocurrencies =
+      await FavoriteCryptocurrency.aggregate<ITelegramFavoriteCryptocurrencyRelations>(
+        [
+          {
+            $lookup: {
+              from: 'cryptocurrencies',
+              localField: 'coin_market_cap',
+              foreignField: '_id',
+              as: 'coin_market_cap',
+            },
+          },
+          {
+            $match: {
+              coin_market_cap: { $exists: true, $type: 'array', $ne: [] },
+              user: {
+                $eq: user._id,
+              },
+            },
+          },
+        ]
+      );
+
+    if (favoriteCryptocurrencies.length === 0) {
+      text = this._telegramTextFormattedService.listRecentText(false, true);
+      await this.sendMessage(chat_id, text);
+      return;
+    }
+
+    const cryptocurrencies =
+      await this._cryptoProcessorService.getListOfFavoriteCryptocurrencies(
+        favoriteCryptocurrencies.map(
+          (it) => it.coin_market_cap[0].id_in_coin_market_cap
+        )
+      );
+
+    text = this._telegramTextFormattedService.listRecentText(
+      false,
+      true,
+      cryptocurrencies
+    );
 
     await this.sendMessage(chat_id, text);
   };
