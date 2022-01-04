@@ -4,7 +4,7 @@ import { IQueryAttributes, IQueryParams, IQueryResponse } from '.';
 import EQueryCode from './enum/query.enum';
 
 export default class QueryService {
-  public sendRequest = async <Headers, ResponseType, BodyType>(
+  public sendRequest = <Headers, ResponseType, BodyType>(
     attributes: IQueryAttributes<Headers>,
     params: IQueryParams,
     body?: BodyType
@@ -19,7 +19,7 @@ export default class QueryService {
       preparedParams += `${key}=${params[key]}&`;
     }
 
-    return await new Promise<IQueryResponse<ResponseType, EQueryCode>>(
+    return new Promise<IQueryResponse<ResponseType, EQueryCode>>(
       (resolve, reject) => {
         const req = request(
           {

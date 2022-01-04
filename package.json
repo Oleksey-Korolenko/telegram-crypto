@@ -14,8 +14,7 @@
     "express": "^4.17.1",
     "lodash": "^4.17.21",
     "mongoose": "^6.1.4",
-    "require-all": "^3.0.0",
-    "validator": "^13.7.0"
+    "require-all": "^3.0.0"
   },
   "author": "",
   "license": "ISC",

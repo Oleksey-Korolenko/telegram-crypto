@@ -35,6 +35,7 @@
         "functions": "ignore"
       }
     ],
-    "no-underscore-dangle": ["error", { "allowAfterThis": true }]
+    "no-underscore-dangle": ["error", { "allowAfterThis": true }],
+    "no-return-await": ["error"]
   }
 }
