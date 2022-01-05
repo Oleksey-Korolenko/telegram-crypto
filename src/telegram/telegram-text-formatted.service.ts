@@ -224,6 +224,30 @@ export default class TelegramTextFormattedService {
     return this.preparedText(messagesInRussian.ERROR.DEFAULT, {});
   };
 
+  public alreadyExistFavoriteCryptocurrency = (symbol: string): string => {
+    let text = '';
+
+    text += this.preparedText(
+      messagesInRussian.ERROR.CRYPTOCURRENCY_ALREADY_EXIST,
+      { symbol }
+    );
+
+    return text;
+  };
+
+  public nothingToDeleteFromFavoriteCryptocurrency = (
+    symbol: string
+  ): string => {
+    let text = '';
+
+    text += this.preparedText(
+      messagesInRussian.ERROR.NOTHING_TO_DELETE_IN_FAVORITE,
+      { symbol }
+    );
+
+    return text;
+  };
+
   private preparedText = (text: string, args: IArgsForPreparedText): string => {
     const textVatiableForReplace = text.match(/\{[A-Za-z_0-9]+\}/g);
 

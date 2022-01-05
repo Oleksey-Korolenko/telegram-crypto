@@ -30,6 +30,10 @@ const messagesInRussian = {
     HELP: '/help - краткое описание возможностей нашего бота!\n',
     LIST_RECENT: '/listrecent - cписок из 20 самых популярных крипт!\n',
     LIST_FAVORITE: '/listfavorite - cписок твоих избранных крипт!\n',
+    ADD_TO_FAVORITE:
+      '/addtofavorite <strong>BTC</strong> - добавляет криптовалюту в ваш список избранного (<strong>BTC</strong> - пример, вместо нее может быть любая другая крипта в краткой записи)!\n',
+    DELETE_FAVORITE:
+      '/deletefavorite <strong>BTC</strong> - удаляет криптовалюту из вашего списка избранного (<strong>BTC</strong> - пример, вместо нее может быть любая другая крипта в краткой записи)!\n',
   },
   ERROR: {
     INCORRECT_COMMAND: 'Нам очень жаль, но наш бот не знает такую команду(',
@@ -39,6 +43,10 @@ const messagesInRussian = {
       'Нам очень жаль но что-то пошло не так! Напиши нам на <strong>example@gmail.com</strong> и мы обязательно это исправим!',
     EMPTY_FAVORITE:
       'Оу, кажется вы еще не добавили ни одну крипту в избранное!',
+    CRYPTOCURRENCY_ALREADY_EXIST:
+      'Оу, кажется криптовалюта (<strong>{symbol}</strong>) уже добавлена в ваш список избранного!',
+    NOTHING_TO_DELETE_IN_FAVORITE:
+      'Оу, мы не можем убрать криптовалюту (<strong>{symbol}</strong>) из вашего списка избранного, ее там и так нет!',
   },
 };
 

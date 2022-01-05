@@ -20,6 +20,7 @@ import EQueryCode from '../query/enum/query.enum';
 import QueryService from '../query/query.service';
 import UserService from '../user/user.service';
 import ETelegramButtonType from './enum/button-type.enum';
+import ETelegramCommandType from './enum/command-type.enum';
 import TelegramTextFormattedService from './telegram-text-formatted.service';
 
 export default class TelegramService {
@@ -179,6 +180,37 @@ export default class TelegramService {
       return;
     }
 
+    switch (text.split(' ')[0]) {
+      case ETelegramCommandType.ADD_TO_FAVORITE: {
+        if (
+          text.split(' ')[1] === text.split(' ')[1].toUpperCase() &&
+          text.split(' ')[1].length < 10
+        ) {
+          await this.saveFavoriteCryptocurrencyCommand(
+            body.message.chat.id,
+            body.message.message_id,
+            body.message.from.id,
+            text.split(' ')[1]
+          );
+        }
+        return;
+      }
+      case ETelegramCommandType.DELETE_FAVORITE: {
+        if (
+          text.split(' ')[1] === text.split(' ')[1].toUpperCase() &&
+          text.split(' ')[1].length < 10
+        ) {
+          await this.removeFromFavoriteCryptocurrencyCommand(
+            body.message.chat.id,
+            body.message.message_id,
+            body.message.from.id,
+            text.split(' ')[1]
+          );
+        }
+        return;
+      }
+    }
+
     await this.incorrectCommand(chatId);
   };
 
@@ -277,12 +309,38 @@ export default class TelegramService {
     }
   };
 
+  public saveFavoriteCryptocurrencyCommand = async (
+    chat_id: number | string,
+    message_id: number,
+    user_id: number,
+    symbol: string
+  ) => {
+    const cryptocurrency = await this._cryptoProcessorService.getCryptocurrency(
+      symbol
+    );
+
+    if (cryptocurrency.data === undefined) {
+      await this.badRequest(chat_id);
+      return;
+    }
+
+    await this.saveFavoriteCryptocurrency(
+      chat_id,
+      message_id,
+      user_id,
+      cryptocurrency.data[symbol].id,
+      symbol,
+      true
+    );
+  };
+
   public saveFavoriteCryptocurrency = async (
     chat_id: number | string,
     message_id: number,
     user_id: number,
     cryptocurrency_id: number,
-    symbol: string
+    symbol: string,
+    isSend = false
   ) => {
     let cryptocurrency = await this._cryptocurrencyService.findOne(
       cryptocurrency_id
@@ -307,6 +365,21 @@ export default class TelegramService {
       return;
     }
 
+    const existFavoriteCryptocurrency =
+      await this._favoriteCryptocurrencyService.findOneByUserIdAndCryptocurrencyId(
+        user._id,
+        cryptocurrency._id
+      );
+
+    if (existFavoriteCryptocurrency !== null) {
+      const text =
+        this._telegramTextFormattedService.alreadyExistFavoriteCryptocurrency(
+          symbol
+        );
+      await this.sendMessage(chat_id, text);
+      return;
+    }
+
     const favoriteCryptocurrency =
       await this._favoriteCryptocurrencyService.insertOne({
         cryptocurrency: cryptocurrency._id,
@@ -323,14 +396,69 @@ export default class TelegramService {
         ETelegramButtonType.ADD_FAVORITE
       );
 
-    await this.updateMessage(chat_id, message_id, text);
+    if (isSend === true) {
+      await this.sendMessage(chat_id, text);
+    } else {
+      await this.updateMessage(chat_id, message_id, text);
+    }
+  };
+
+  public removeFromFavoriteCryptocurrencyCommand = async (
+    chat_id: number | string,
+    message_id: number,
+    user_id: number,
+    symbol: string
+  ) => {
+    const cryptocurrency = await this._cryptoProcessorService.getCryptocurrency(
+      symbol
+    );
+
+    if (cryptocurrency.data === undefined) {
+      await this.badRequest(chat_id);
+      return;
+    }
+
+    let cryptocurrencyMongo = await this._cryptocurrencyService.findOne(
+      cryptocurrency.data[symbol].id
+    );
+
+    let user = await this._userService.findOne(user_id);
+
+    if (user === null || cryptocurrencyMongo === null) {
+      await this.badRequest(chat_id);
+      return;
+    }
+
+    const favoriteCryptocurrency =
+      await this._favoriteCryptocurrencyService.findOneByUserIdAndCryptocurrencyId(
+        user._id,
+        cryptocurrencyMongo._id
+      );
+
+    if (favoriteCryptocurrency === null) {
+      const text =
+        this._telegramTextFormattedService.nothingToDeleteFromFavoriteCryptocurrency(
+          symbol
+        );
+      await this.sendMessage(chat_id, text);
+      return;
+    }
+
+    await this.removeFromFavoriteCryptocurrency(
+      chat_id,
+      message_id,
+      favoriteCryptocurrency._id.toString(),
+      symbol,
+      true
+    );
   };
 
   public removeFromFavoriteCryptocurrency = async (
     chat_id: number | string,
     message_id: number,
     cryptocurrency_id: string,
-    symbol: string
+    symbol: string,
+    isSend = false
   ) => {
     try {
       await this._favoriteCryptocurrencyService.deleteOne(
@@ -343,7 +471,11 @@ export default class TelegramService {
           ETelegramButtonType.REMOVE_FAVORITE
         );
 
-      await this.updateMessage(chat_id, message_id, text);
+      if (isSend === true) {
+        await this.sendMessage(chat_id, text);
+      } else {
+        await this.updateMessage(chat_id, message_id, text);
+      }
     } catch (e) {
       console.log(e);
       await this.badRequest(chat_id);
