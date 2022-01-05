@@ -11,6 +11,7 @@ import TelegramService from './telegram.service';
 
 export default async (router: typeof Router) => {
   const routes = router();
+
   const telegramService = new TelegramService();
   await telegramService.setWebhook();
   const queryService = new QueryService();
@@ -100,5 +101,6 @@ export default async (router: typeof Router) => {
 
     return queryService.sendAnswer<{}>(200, {}, res);
   });
+
   return routes;
 };

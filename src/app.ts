@@ -1,7 +1,7 @@
 import express from 'express';
 import requireAll from 'require-all';
 import dotenv from 'dotenv';
-import { Mongo } from './db';
+import { connectToDatabase } from './db';
 
 const bootstrap = async () => {
   const app = express();
@@ -9,8 +9,7 @@ const bootstrap = async () => {
 
   dotenv.config();
 
-  const mongo = new Mongo();
-  await mongo.getConnection();
+  await connectToDatabase();
 
   await app.use(express.json({ limit: '3mb' }));
 
