@@ -1,7 +1,6 @@
 import { ObjectId } from 'mongodb';
 import {
   ITelegramCommandRessponse,
-  ITelegramFavoriteCryptocurrencyRelations,
   ITelegramQueryBody,
   ITelegramQueryHeaders,
   ITelegramResponse,
@@ -10,9 +9,7 @@ import {
   ITelegramUpdateResponse,
 } from '.';
 import CryptoProcessorService from '../crypto-processor/crypto-processor.service';
-import { Cryptocurrency } from '../cryptocurrency';
 import CryptocurrencyService from '../cryptocurrency/cryptocurrency.service';
-import { collections } from '../db';
 import { IFavoriteCryptocurrencyWithRelationships } from '../favorite-cryptocurrency';
 import FavoriteCryptocurrencyService from '../favorite-cryptocurrency/favorite-cryptocurrency.service';
 import { IQueryAttributes } from '../query';
