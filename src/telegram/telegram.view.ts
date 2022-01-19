@@ -5,18 +5,18 @@ import {
   ITelegramTextFormatterExtra,
   ITelegramTextFormatterResponse,
 } from '.';
-import ECryptoProcessorCode from '../crypto-processor/enum/crypto-processor-code.enum';
 import {
-  ICryptoProcessorCryptocurrencySingle,
-  ICryptoProcessorPreparedCryptocurrency,
-} from '../crypto-processor/interface';
+  ICryptocurrencyAPIPrepared,
+  ICryptocurrencyAPISingle,
+} from '../cryptocurrency';
+import ECryptocurrencyAPICode from '../cryptocurrency/enum/cryptocurrency-api-code.enum';
 import { IQueryResponse } from '../query';
 import EQueryCode from '../query/enum/query.enum';
 import ETelegramButtonType from './enum/button-type.enum';
 import messagesInRussian from './messages/ru';
 
-export default class TelegramTextFormattedService {
-  public incorrectCommandText = (): string => {
+export default class TelegramView {
+  static incorrectCommandText = (): string => {
     let text = '';
 
     text += this.preparedText(messagesInRussian.ERROR.INCORRECT_COMMAND, {});
@@ -24,13 +24,10 @@ export default class TelegramTextFormattedService {
     return text;
   };
 
-  public listRecentText = (
+  static listRecentText = (
     isListEmpty: boolean,
     isListFavorite: boolean,
-    cryptocurrencies?: IQueryResponse<
-      ICryptoProcessorPreparedCryptocurrency[],
-      EQueryCode
-    >
+    cryptocurrencies?: IQueryResponse<ICryptocurrencyAPIPrepared[], EQueryCode>
   ): string => {
     let text = '';
 
@@ -60,7 +57,7 @@ export default class TelegramTextFormattedService {
     return text;
   };
 
-  public startText = (): string => {
+  static startText = (): string => {
     let text = '';
 
     text += this.preparedText(messagesInRussian.START, {});
@@ -68,7 +65,7 @@ export default class TelegramTextFormattedService {
     return text;
   };
 
-  public helpText = (): string => {
+  static helpText = (): string => {
     let text = '';
 
     const help: { [key: string]: string } = messagesInRussian.HELP;
@@ -83,10 +80,10 @@ export default class TelegramTextFormattedService {
     return text;
   };
 
-  public getCurrencySymbolText = (
+  static getCurrencySymbolText = (
     cryptocurrency: IQueryResponse<
-      ICryptoProcessorCryptocurrencySingle,
-      ECryptoProcessorCode
+      ICryptocurrencyAPISingle,
+      ECryptocurrencyAPICode
     >,
     symbol: string,
     alreadyExist?: boolean,
@@ -96,15 +93,15 @@ export default class TelegramTextFormattedService {
     let extra: ITelegramTextFormatterExtra = {};
 
     switch (cryptocurrency.code) {
-      case ECryptoProcessorCode.BAD_REQUEST: {
+      case ECryptocurrencyAPICode.BAD_REQUEST: {
         text += this.preparedText(messagesInRussian.ERROR.DEFAULT, {});
         break;
       }
-      case ECryptoProcessorCode.INVALID_SYMBOL: {
+      case ECryptocurrencyAPICode.INVALID_SYMBOL: {
         text += this.preparedText(messagesInRussian.ERROR.INVALID_SYMBOL, {});
         break;
       }
-      case ECryptoProcessorCode.OK: {
+      case ECryptocurrencyAPICode.OK: {
         if (
           cryptocurrency.data === undefined ||
           cryptocurrency.data[symbol] === undefined
@@ -165,7 +162,7 @@ export default class TelegramTextFormattedService {
     return { text, extra };
   };
 
-  public favoriteCryptocurrencyNoticeText = (
+  static favoriteCryptocurrencyNoticeText = (
     symbol: string,
     typeOperation: ETelegramButtonType
   ): string => {
@@ -197,7 +194,7 @@ export default class TelegramTextFormattedService {
     return text;
   };
 
-  private getCurrencySymbolKeyboardMarkup = (
+  static getCurrencySymbolKeyboardMarkup = (
     alreadyExist: boolean,
     idFavorite: number | string,
     symbol: string
@@ -220,11 +217,11 @@ export default class TelegramTextFormattedService {
     };
   };
 
-  public badRequestText = (): string => {
+  static badRequestText = (): string => {
     return this.preparedText(messagesInRussian.ERROR.DEFAULT, {});
   };
 
-  public alreadyExistFavoriteCryptocurrency = (symbol: string): string => {
+  static alreadyExistFavoriteCryptocurrency = (symbol: string): string => {
     let text = '';
 
     text += this.preparedText(
@@ -235,7 +232,7 @@ export default class TelegramTextFormattedService {
     return text;
   };
 
-  public nothingToDeleteFromFavoriteCryptocurrency = (
+  static nothingToDeleteFromFavoriteCryptocurrency = (
     symbol: string
   ): string => {
     let text = '';
@@ -248,7 +245,7 @@ export default class TelegramTextFormattedService {
     return text;
   };
 
-  private preparedText = (text: string, args: IArgsForPreparedText): string => {
+  static preparedText = (text: string, args: IArgsForPreparedText): string => {
     const textVatiableForReplace = text.match(/\{[A-Za-z_0-9]+\}/g);
 
     if (textVatiableForReplace === null) {

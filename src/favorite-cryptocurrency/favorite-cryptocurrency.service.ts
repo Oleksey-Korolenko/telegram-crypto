@@ -1,71 +1,44 @@
-import mongodb, { ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import { FavoriteCryptocurrency, IFavoriteCryptocurrencyWithoutId } from '.';
-import { collections } from '../db';
+import FavoriteCryptocurrencyQueryService from './favorite-cryptocurrency.query.service';
 
 export default class FavoriteCryptocurrencyService {
-  private _collection;
+  #favoriteCryptocurrencyQueryService;
 
   constructor() {
-    this._collection = collections.favorite_cryptocurrencies;
+    this.#favoriteCryptocurrencyQueryService =
+      new FavoriteCryptocurrencyQueryService();
   }
 
-  public findOneByUserIdAndCryptocurrencyId = async (
+  public findOneByUserIdAndCryptocurrencyId = (
     userId: ObjectId,
     cryptocurrencyId: ObjectId
   ): Promise<FavoriteCryptocurrency | null> => {
-    return this._collection?.findOne({
-      $and: [{ user: userId }, { cryptocurrency: cryptocurrencyId }],
-    }) as Promise<FavoriteCryptocurrency | null>;
+    return this.#favoriteCryptocurrencyQueryService.findOneByUserIdAndCryptocurrencyId(
+      userId,
+      cryptocurrencyId
+    );
   };
 
   public findById = async (
     id: ObjectId
   ): Promise<FavoriteCryptocurrency | null> => {
-    return this._collection?.findOne({
-      _id: id,
-    }) as Promise<FavoriteCryptocurrency | null>;
+    return this.#favoriteCryptocurrencyQueryService.findById(id);
   };
 
   public insertOne = async (
     cryptocurrency: IFavoriteCryptocurrencyWithoutId
   ): Promise<FavoriteCryptocurrency | null> => {
-    const _id = ObjectId.createFromTime(
-      Math.round(new Date().getTime() / 1000)
-    );
-
-    const response = await this._collection?.insertOne({
-      ...cryptocurrency,
-      _id,
-    } as FavoriteCryptocurrency);
-
-    if (response?.insertedId === undefined) {
-      return null;
-    }
-    return this.findById(response.insertedId);
+    return this.#favoriteCryptocurrencyQueryService.insertOne(cryptocurrency);
   };
 
   public deleteOne = async (id: ObjectId): Promise<boolean> => {
-    const response = await this._collection?.deleteOne({ _id: id });
-
-    if (response === undefined) {
-      throw new Error(`Bad request! Undefined in response!`);
-    }
-
-    if (response.deletedCount === 0) {
-      throw new Error(`Bad request! Can't find something to delete!`);
-    }
-
-    return true;
+    return this.#favoriteCryptocurrencyQueryService.deleteOne(id);
   };
 
   public aggregation = async <T>(
     pipeline: Document[]
   ): Promise<T[] | undefined> => {
-    const response = await this._collection?.aggregate<T>(pipeline);
-    if (response === undefined) {
-      return response;
-    }
-
-    return response.toArray();
+    return this.#favoriteCryptocurrencyQueryService.aggregation(pipeline);
   };
 }

@@ -1,4 +1,4 @@
-export interface ICryptoProcessorCryptocurrencyQuote {
+export interface ICryptocurrencyAPIQuote {
   USD: {
     price: number;
     volume_24h: number;
@@ -20,7 +20,7 @@ export interface ICryptoProcessorCryptocurrencyQuote {
   };
 }
 
-export interface ICryptoProcessorCryptocurrency {
+export interface ICryptocurrencyAPI {
   id: number;
   symbol: string;
   name: string;
@@ -29,14 +29,14 @@ export interface ICryptoProcessorCryptocurrency {
   total_supply: number;
   market_cap_by_total_supply: number;
   max_supply: number;
-  quote: ICryptoProcessorCryptocurrencyQuote;
+  quote: ICryptocurrencyAPIQuote;
 }
 
-export interface ICryptoProcessorCryptocurrencySingle {
-  [key: string]: ICryptoProcessorCryptocurrency;
+export interface ICryptocurrencyAPISingle {
+  [key: string]: ICryptocurrencyAPI;
 }
 
-export interface ICryptoProcessorPreparedCryptocurrency {
+export interface ICryptocurrencyAPIPrepared {
   symbol: string;
   priceInUSD: number;
 }

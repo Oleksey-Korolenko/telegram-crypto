@@ -7,13 +7,14 @@ import {
 import QueryService from '../query/query.service';
 import ETelegramButtonType from './enum/button-type.enum';
 import ETelegramCommandType from './enum/command-type.enum';
+import TelegramApiService from './telegram.api.service';
 import TelegramService from './telegram.service';
 
 export default async (router: typeof Router) => {
   const routes = router();
 
   const telegramService = new TelegramService();
-  await telegramService.setWebhook();
+  await new TelegramApiService().setWebhook();
   const queryService = new QueryService();
 
   routes.post('/update', async (req: Request, res: Response) => {

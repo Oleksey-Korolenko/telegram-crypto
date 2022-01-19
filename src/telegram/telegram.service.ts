@@ -1,161 +1,28 @@
 import { ObjectId } from 'mongodb';
-import {
-  ITelegramCommandRessponse,
-  ITelegramQueryBody,
-  ITelegramQueryHeaders,
-  ITelegramResponse,
-  ITelegramTextFormatterExtra,
-  ITelegramUpdateQueryBody,
-  ITelegramUpdateResponse,
-} from '.';
-import CryptoProcessorService from '../crypto-processor/crypto-processor.service';
+import { ITelegramCommandRessponse, ITelegramUpdateResponse } from '.';
 import CryptocurrencyService from '../cryptocurrency/cryptocurrency.service';
 import { IFavoriteCryptocurrencyWithRelationships } from '../favorite-cryptocurrency';
 import FavoriteCryptocurrencyService from '../favorite-cryptocurrency/favorite-cryptocurrency.service';
-import { IQueryAttributes } from '../query';
-import EQueryCode from '../query/enum/query.enum';
-import QueryService from '../query/query.service';
 import UserService from '../user/user.service';
 import ETelegramButtonType from './enum/button-type.enum';
 import ETelegramCommandType from './enum/command-type.enum';
-import TelegramTextFormattedService from './telegram-text-formatted.service';
+import TelegramApiService from './telegram.api.service';
+import TelegramView from './telegram.view';
 
 export default class TelegramService {
-  private _baseUrl;
-
-  private _token;
-
-  private _baseHeaders;
-
-  private _baseAttributes;
-
-  private _queryService;
-
-  private _cryptoProcessorService;
-
-  private _telegramTextFormattedService;
-
-  private _userService;
-
-  private _cryptocurrencyService;
-
-  private _favoriteCryptocurrencyService;
+  #telegramApiService;
+  #telegramView;
+  #userService;
+  #cryptocurrencyService;
+  #favoriteCryptocurrencyService;
 
   constructor() {
-    this._baseUrl = process.env.TELEGRAM_WEBHOOK_HOST;
-    this._token = process.env.TELEGRAM_ADMIN_TOKEN;
-    this._baseHeaders = {
-      'Content-Type': 'application/json',
-    } as ITelegramQueryHeaders;
-    this._baseAttributes = {
-      hostname: 'api.telegram.org',
-      path: '',
-      method: 'GET',
-      port: 443,
-      headers: {
-        ...this._baseHeaders,
-      },
-    } as IQueryAttributes<ITelegramQueryHeaders>;
-    this._queryService = new QueryService();
-    this._cryptoProcessorService = new CryptoProcessorService();
-    this._telegramTextFormattedService = new TelegramTextFormattedService();
-    this._userService = new UserService();
-    this._cryptocurrencyService = new CryptocurrencyService();
-    this._favoriteCryptocurrencyService = new FavoriteCryptocurrencyService();
+    this.#telegramApiService = new TelegramApiService();
+    this.#telegramView = TelegramView;
+    this.#userService = new UserService();
+    this.#cryptocurrencyService = new CryptocurrencyService();
+    this.#favoriteCryptocurrencyService = new FavoriteCryptocurrencyService();
   }
-
-  public setWebhook = async () => {
-    const response = await this._queryService.sendRequest<
-      {},
-      ITelegramResponse,
-      {}
-    >(
-      {
-        ...this._baseAttributes,
-        path: `/bot${this._token}/setWebhook`,
-      },
-      {
-        url: `${this._baseUrl}/api/telegram/update`,
-      },
-      {}
-    );
-
-    if (response.code !== EQueryCode.OK || response.data?.ok === false) {
-      throw new Error(
-        `Can't set webhook to telegram! ${response.data?.description ?? ''}`
-      );
-    } else {
-      console.info(response.data?.description);
-    }
-  };
-
-  private sendMessage = async (
-    chat_id: number | string,
-    text: string,
-    extra?: ITelegramTextFormatterExtra
-  ) => {
-    const response = await this._queryService.sendRequest<
-      {},
-      ITelegramResponse,
-      ITelegramQueryBody
-    >(
-      {
-        ...this._baseAttributes,
-        method: 'POST',
-        path: `/bot${this._token}/sendMessage`,
-      },
-      {},
-      {
-        chat_id,
-        text,
-        parse_mode: 'HTML',
-        ...extra,
-      }
-    );
-
-    if (response.code !== EQueryCode.OK || response.data?.ok === false) {
-      console.warn(
-        `Can't send message to telegram chat: [${chat_id}]! ${
-          response.data?.description ?? ''
-        }`
-      );
-    }
-  };
-
-  private updateMessage = async (
-    chat_id: number | string,
-    message_id: number,
-    text: string,
-    extra?: ITelegramTextFormatterExtra
-  ) => {
-    const response = await this._queryService.sendRequest<
-      {},
-      ITelegramResponse,
-      ITelegramUpdateQueryBody
-    >(
-      {
-        ...this._baseAttributes,
-        method: 'POST',
-        path: `/bot${this._token}/editMessageText`,
-      },
-      {},
-      {
-        chat_id,
-        text,
-        message_id,
-        parse_mode: 'HTML',
-        ...extra,
-      }
-    );
-
-    if (response.code !== EQueryCode.OK || response.data?.ok === false) {
-      console.warn(
-        `Can't send message to telegram chat: [${chat_id}]! ${
-          response.data?.description ?? ''
-        }`
-      );
-    }
-  };
 
   public defaultComands = async (
     body: ITelegramUpdateResponse | ITelegramCommandRessponse
@@ -213,39 +80,39 @@ export default class TelegramService {
 
   public listRecent = async (chat_id: number | string) => {
     const cryptocurrencies =
-      await this._cryptoProcessorService.getListOfCryptocurrencies();
+      await this.#cryptocurrencyService.getListOfCryptocurrencies();
 
-    const text = this._telegramTextFormattedService.listRecentText(
+    const text = this.#telegramView.listRecentText(
       false,
       false,
       cryptocurrencies
     );
 
-    await this.sendMessage(chat_id, text);
+    await this.#telegramApiService.sendMessage(chat_id, text);
   };
 
   public start = async (chat_id: number | string) => {
-    const text = this._telegramTextFormattedService.startText();
+    const text = this.#telegramView.startText();
 
-    await this.sendMessage(chat_id, text);
+    await this.#telegramApiService.sendMessage(chat_id, text);
   };
 
   public help = async (chat_id: number | string) => {
-    const text = this._telegramTextFormattedService.helpText();
+    const text = this.#telegramView.helpText();
 
-    await this.sendMessage(chat_id, text);
+    await this.#telegramApiService.sendMessage(chat_id, text);
   };
 
   public incorrectCommand = async (chat_id: number | string) => {
-    const text = this._telegramTextFormattedService.incorrectCommandText();
+    const text = this.#telegramView.incorrectCommandText();
 
-    await this.sendMessage(chat_id, text);
+    await this.#telegramApiService.sendMessage(chat_id, text);
   };
 
   public badRequest = async (chat_id: number | string) => {
-    const text = this._telegramTextFormattedService.badRequestText();
+    const text = this.#telegramView.badRequestText();
 
-    await this.sendMessage(chat_id, text);
+    await this.#telegramApiService.sendMessage(chat_id, text);
   };
 
   private getCurrencySymbol = async (
@@ -253,56 +120,53 @@ export default class TelegramService {
     user_id: number,
     symbol: string
   ) => {
-    const cryptocurrency = await this._cryptoProcessorService.getCryptocurrency(
+    const cryptocurrency = await this.#cryptocurrencyService.getCryptocurrency(
       symbol
     );
 
     if (cryptocurrency.data === undefined) {
-      const { text, extra } =
-        this._telegramTextFormattedService.getCurrencySymbolText(
-          cryptocurrency,
-          symbol
-        );
+      const { text, extra } = this.#telegramView.getCurrencySymbolText(
+        cryptocurrency,
+        symbol
+      );
 
-      await this.sendMessage(chat_id, text, extra);
+      await this.#telegramApiService.sendMessage(chat_id, text, extra);
 
       return;
     }
 
-    const cryptocurrencyMongo = await this._cryptocurrencyService.findOne(
+    const cryptocurrencyMongo = await this.#cryptocurrencyService.findOne(
       cryptocurrency.data[symbol].id
     );
 
-    const user = await this._userService.findOne(user_id);
+    const user = await this.#userService.findOne(user_id);
 
     if (user === null || cryptocurrencyMongo === null) {
-      const { text, extra } =
-        this._telegramTextFormattedService.getCurrencySymbolText(
-          cryptocurrency,
-          symbol,
-          false,
-          cryptocurrency.data[symbol].id
-        );
+      const { text, extra } = this.#telegramView.getCurrencySymbolText(
+        cryptocurrency,
+        symbol,
+        false,
+        cryptocurrency.data[symbol].id
+      );
 
-      await this.sendMessage(chat_id, text, extra);
+      await this.#telegramApiService.sendMessage(chat_id, text, extra);
     } else {
       const favoriteCryptocurrency =
-        await this._favoriteCryptocurrencyService.findOneByUserIdAndCryptocurrencyId(
+        await this.#favoriteCryptocurrencyService.findOneByUserIdAndCryptocurrencyId(
           user._id,
           cryptocurrencyMongo._id
         );
 
-      const { text, extra } =
-        this._telegramTextFormattedService.getCurrencySymbolText(
-          cryptocurrency,
-          symbol,
-          favoriteCryptocurrency === null ? false : true,
-          favoriteCryptocurrency === null
-            ? cryptocurrency.data[symbol].id
-            : favoriteCryptocurrency._id.toString()
-        );
+      const { text, extra } = this.#telegramView.getCurrencySymbolText(
+        cryptocurrency,
+        symbol,
+        favoriteCryptocurrency === null ? false : true,
+        favoriteCryptocurrency === null
+          ? cryptocurrency.data[symbol].id
+          : favoriteCryptocurrency._id.toString()
+      );
 
-      await this.sendMessage(chat_id, text, extra);
+      await this.#telegramApiService.sendMessage(chat_id, text, extra);
     }
   };
 
@@ -312,7 +176,7 @@ export default class TelegramService {
     user_id: number,
     symbol: string
   ) => {
-    const cryptocurrency = await this._cryptoProcessorService.getCryptocurrency(
+    const cryptocurrency = await this.#cryptocurrencyService.getCryptocurrency(
       symbol
     );
 
@@ -339,23 +203,13 @@ export default class TelegramService {
     symbol: string,
     isSend = false
   ) => {
-    let cryptocurrency = await this._cryptocurrencyService.findOne(
-      cryptocurrency_id
-    );
+    const cryptocurrency = await this.#cryptocurrencyService.findOneOrInsert({
+      id_in_coin_market_cap: cryptocurrency_id,
+    });
 
-    let user = await this._userService.findOne(user_id);
-
-    if (user === null) {
-      user = await this._userService.insertOne({
-        user_tg_id: user_id,
-      });
-    }
-
-    if (cryptocurrency === null) {
-      cryptocurrency = await this._cryptocurrencyService.insertOne({
-        id_in_coin_market_cap: cryptocurrency_id,
-      });
-    }
+    const user = await this.#userService.findOneOrInsert({
+      user_tg_id: user_id,
+    });
 
     if (user === null || cryptocurrency === null) {
       await this.badRequest(chat_id);
@@ -363,22 +217,20 @@ export default class TelegramService {
     }
 
     const existFavoriteCryptocurrency =
-      await this._favoriteCryptocurrencyService.findOneByUserIdAndCryptocurrencyId(
+      await this.#favoriteCryptocurrencyService.findOneByUserIdAndCryptocurrencyId(
         user._id,
         cryptocurrency._id
       );
 
     if (existFavoriteCryptocurrency !== null) {
       const text =
-        this._telegramTextFormattedService.alreadyExistFavoriteCryptocurrency(
-          symbol
-        );
-      await this.sendMessage(chat_id, text);
+        this.#telegramView.alreadyExistFavoriteCryptocurrency(symbol);
+      await this.#telegramApiService.sendMessage(chat_id, text);
       return;
     }
 
     const favoriteCryptocurrency =
-      await this._favoriteCryptocurrencyService.insertOne({
+      await this.#favoriteCryptocurrencyService.insertOne({
         cryptocurrency: cryptocurrency._id,
         user: user._id,
       });
@@ -387,16 +239,15 @@ export default class TelegramService {
       await this.badRequest(chat_id);
     }
 
-    const text =
-      this._telegramTextFormattedService.favoriteCryptocurrencyNoticeText(
-        symbol,
-        ETelegramButtonType.ADD_FAVORITE
-      );
+    const text = this.#telegramView.favoriteCryptocurrencyNoticeText(
+      symbol,
+      ETelegramButtonType.ADD_FAVORITE
+    );
 
     if (isSend === true) {
-      await this.sendMessage(chat_id, text);
+      await this.#telegramApiService.sendMessage(chat_id, text);
     } else {
-      await this.updateMessage(chat_id, message_id, text);
+      await this.#telegramApiService.updateMessage(chat_id, message_id, text);
     }
   };
 
@@ -406,7 +257,7 @@ export default class TelegramService {
     user_id: number,
     symbol: string
   ) => {
-    const cryptocurrency = await this._cryptoProcessorService.getCryptocurrency(
+    const cryptocurrency = await this.#cryptocurrencyService.getCryptocurrency(
       symbol
     );
 
@@ -415,11 +266,11 @@ export default class TelegramService {
       return;
     }
 
-    let cryptocurrencyMongo = await this._cryptocurrencyService.findOne(
+    let cryptocurrencyMongo = await this.#cryptocurrencyService.findOne(
       cryptocurrency.data[symbol].id
     );
 
-    let user = await this._userService.findOne(user_id);
+    let user = await this.#userService.findOne(user_id);
 
     if (user === null || cryptocurrencyMongo === null) {
       await this.badRequest(chat_id);
@@ -427,17 +278,15 @@ export default class TelegramService {
     }
 
     const favoriteCryptocurrency =
-      await this._favoriteCryptocurrencyService.findOneByUserIdAndCryptocurrencyId(
+      await this.#favoriteCryptocurrencyService.findOneByUserIdAndCryptocurrencyId(
         user._id,
         cryptocurrencyMongo._id
       );
 
     if (favoriteCryptocurrency === null) {
       const text =
-        this._telegramTextFormattedService.nothingToDeleteFromFavoriteCryptocurrency(
-          symbol
-        );
-      await this.sendMessage(chat_id, text);
+        this.#telegramView.nothingToDeleteFromFavoriteCryptocurrency(symbol);
+      await this.#telegramApiService.sendMessage(chat_id, text);
       return;
     }
 
@@ -458,20 +307,19 @@ export default class TelegramService {
     isSend = false
   ) => {
     try {
-      await this._favoriteCryptocurrencyService.deleteOne(
+      await this.#favoriteCryptocurrencyService.deleteOne(
         new ObjectId(cryptocurrency_id)
       );
 
-      const text =
-        this._telegramTextFormattedService.favoriteCryptocurrencyNoticeText(
-          symbol,
-          ETelegramButtonType.REMOVE_FAVORITE
-        );
+      const text = this.#telegramView.favoriteCryptocurrencyNoticeText(
+        symbol,
+        ETelegramButtonType.REMOVE_FAVORITE
+      );
 
       if (isSend === true) {
-        await this.sendMessage(chat_id, text);
+        await this.#telegramApiService.sendMessage(chat_id, text);
       } else {
-        await this.updateMessage(chat_id, message_id, text);
+        await this.#telegramApiService.updateMessage(chat_id, message_id, text);
       }
     } catch (e) {
       console.log(e);
@@ -480,18 +328,18 @@ export default class TelegramService {
   };
 
   public listFavorite = async (chat_id: number | string, user_id: number) => {
-    const user = await this._userService.findOne(user_id);
+    const user = await this.#userService.findOne(user_id);
 
     let text = '';
 
     if (user === null) {
-      text = this._telegramTextFormattedService.listRecentText(false, true);
-      await this.sendMessage(chat_id, text);
+      text = this.#telegramView.listRecentText(false, true);
+      await this.#telegramApiService.sendMessage(chat_id, text);
       return;
     }
 
     const favoriteCryptocurrencies =
-      await this._favoriteCryptocurrencyService.aggregation<IFavoriteCryptocurrencyWithRelationships>(
+      await this.#favoriteCryptocurrencyService.aggregation<IFavoriteCryptocurrencyWithRelationships>(
         [
           {
             $lookup: {
@@ -516,24 +364,20 @@ export default class TelegramService {
       favoriteCryptocurrencies === undefined ||
       favoriteCryptocurrencies.length === 0
     ) {
-      text = this._telegramTextFormattedService.listRecentText(false, true);
-      await this.sendMessage(chat_id, text);
+      text = this.#telegramView.listRecentText(false, true);
+      await this.#telegramApiService.sendMessage(chat_id, text);
       return;
     }
 
     const cryptocurrencies =
-      await this._cryptoProcessorService.getListOfFavoriteCryptocurrencies(
+      await this.#cryptocurrencyService.getListOfFavoriteCryptocurrencies(
         favoriteCryptocurrencies.map(
           (it) => it.cryptocurrency[0].id_in_coin_market_cap
         )
       );
 
-    text = this._telegramTextFormattedService.listRecentText(
-      false,
-      true,
-      cryptocurrencies
-    );
+    text = this.#telegramView.listRecentText(false, true, cryptocurrencies);
 
-    await this.sendMessage(chat_id, text);
+    await this.#telegramApiService.sendMessage(chat_id, text);
   };
 }

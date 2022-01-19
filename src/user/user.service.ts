@@ -1,39 +1,27 @@
 import { ObjectId } from 'mongodb';
 import { IUserWithoutId, User } from '.';
-import { collections } from '../db';
+import UserQueryService from './user.query.service';
 
 export default class UserService {
-  private _collection;
+  #userQueryService;
 
   constructor() {
-    this._collection = collections.users;
+    this.#userQueryService = new UserQueryService();
   }
 
-  public findOne = async (id: number): Promise<User | null> => {
-    return this._collection?.findOne({
-      user_tg_id: id,
-    }) as Promise<User | null>;
+  public findOne = (id: number): Promise<User | null> => {
+    return this.#userQueryService.findOne(id);
   };
 
-  public findById = async (id: ObjectId): Promise<User | null> => {
-    return this._collection?.findOne({
-      _id: id,
-    }) as Promise<User | null>;
+  public findById = (id: ObjectId): Promise<User | null> => {
+    return this.#userQueryService.findById(id);
   };
 
-  public insertOne = async (user: IUserWithoutId): Promise<User | null> => {
-    const _id = ObjectId.createFromTime(
-      Math.round(new Date().getTime() / 1000)
-    );
+  public insertOne = (user: IUserWithoutId): Promise<User | null> => {
+    return this.#userQueryService.insertOne(user);
+  };
 
-    const response = await this._collection?.insertOne({
-      ...user,
-      _id,
-    } as User);
-
-    if (response?.insertedId === undefined) {
-      return null;
-    }
-    return this.findById(response.insertedId);
+  public findOneOrInsert = (user: IUserWithoutId): Promise<User | null> => {
+    return this.#userQueryService.findOneOrInsert(user);
   };
 }
